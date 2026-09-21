@@ -11,7 +11,18 @@ export async function fetchCurrentUser() {
 }
 
 export async function readJson<T>(response: Response): Promise<T> {
-  const body = await response.json() as T & { error?: string };
-  if (!response.ok) throw new Error(body.error ?? 'Something went wrong.');
+  const responseText = await response.text();
+  let body: (T & { error?: string }) | null = null;
+
+  if (responseText) {
+    try {
+      body = JSON.parse(responseText) as T & { error?: string };
+    } catch {
+      // Keep the response handling resilient when an upstream error page is returned.
+    }
+  }
+
+  if (!response.ok) throw new Error(body?.error ?? 'The server had trouble with that request. Please try again.');
+  if (!body) throw new Error('The server returned an incomplete response. Please try again.');
   return body;
 }
