@@ -58,6 +58,8 @@ export default function HomePage() {
   const [passage, setPassage] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [clearAllOpen, setClearAllOpen] = useState(false);
+  const [clearingAll, setClearingAll] = useState(false);
   const [status, setStatus] = useState<{ message: string; tone: 'success' | 'error' } | null>(null);
   const stats = useMemo(() => getStats(readings), [readings]);
   const previewCount = countVerses(passage);
@@ -102,12 +104,30 @@ export default function HomePage() {
   }
 
   async function clearReadings() {
+    setClearingAll(true);
     try {
       await readJson<{ ok: boolean }>(await fetch('/api/readings', { method: 'DELETE' }));
       setReadings([]);
+      setClearAllOpen(false);
       setStatus({ message: 'Your reading history has been cleared.', tone: 'success' });
     } catch (error) {
       setStatus({ message: error instanceof Error ? error.message : 'Could not clear your readings.', tone: 'error' });
+    } finally {
+      setClearingAll(false);
+    }
+  }
+
+  async function clearReadingsForDate(readingDate: string) {
+    try {
+      await readJson<{ ok: boolean; readingDate: string }>(
+        await fetch(`/api/readings?date=${encodeURIComponent(readingDate)}`, { method: 'DELETE' }),
+      );
+      setReadings((current) => current.filter((reading) => reading.readingDate !== readingDate));
+      setStatus({ message: `The readings for ${readingDate} have been cleared.`, tone: 'success' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not clear that day.';
+      setStatus({ message, tone: 'error' });
+      throw error;
     }
   }
 
@@ -153,11 +173,11 @@ export default function HomePage() {
           </div>
         </section>
 
-        <ReadingHeatmap readings={readings} />
+        <ReadingHeatmap readings={readings} onClearDay={clearReadingsForDate} />
 
         <section className="clear-section">
           <div><h2>Need a fresh start?</h2></div>
-          <AlertDialog>
+          <AlertDialog open={clearAllOpen} onOpenChange={setClearAllOpen}>
             <AlertDialogTrigger render={<Button variant="destructive" size="lg" />}><Trash2 aria-hidden="true" /> Clear all data</AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -166,8 +186,10 @@ export default function HomePage() {
                 <AlertDialogDescription>This permanently removes every logged reading and resets your reading statistics. This can’t be undone.</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Keep my readings</AlertDialogCancel>
-                <AlertDialogAction variant="destructive" onClick={clearReadings}>Yes, clear my data</AlertDialogAction>
+                <AlertDialogCancel disabled={clearingAll}>Keep my readings</AlertDialogCancel>
+                <AlertDialogAction variant="destructive" disabled={clearingAll} onClick={() => void clearReadings()}>
+                  {clearingAll ? 'Clearing…' : 'Yes, clear my data'}
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
