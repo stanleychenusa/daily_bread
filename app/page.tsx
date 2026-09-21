@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
-import { ArrowRight, CheckCircle2, Eye, EyeOff, Mail, Wheat } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Eye, EyeOff, Mail } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,46 +67,11 @@ export default function WelcomePage() {
 
   return (
     <main className="auth-shell">
-      <section className="auth-story" aria-label="Daily Bread introduction">
-        <a className="brand-lockup" href="/" aria-label="Daily Bread home">
-          <span className="brand-mark"><Wheat aria-hidden="true" /></span>
-          <span>
-            <strong>Daily Bread</strong>
-            <small>Your daily portion of Scripture.</small>
-          </span>
-        </a>
-
-        <div className="story-copy">
-          <p className="eyebrow">Read · Reflect · Grow</p>
-          <h1>A little time in the Word goes a long way.</h1>
-          <p>
-            Keep a gentle rhythm, celebrate the verses you’ve read, and grow
-            alongside people who cheer you on.
-          </p>
-        </div>
-
-        <div className="daily-verse">
-          <span>Today’s encouragement</span>
-          <blockquote>“Give us this day our daily bread.”</blockquote>
-          <cite>Matthew 6:11</cite>
-        </div>
-      </section>
-
       <section className="auth-panel">
         <div className="auth-card">
-          <div className="mobile-brand"><Wheat aria-hidden="true" /> Daily Bread</div>
-          <p className="eyebrow">Welcome to the table</p>
-          <h2>{mode === 'login' ? 'Good to see you again.' : 'Pull up a chair.'}</h2>
-          <p className="auth-intro">
-            {mode === 'login'
-              ? 'Sign in to continue your reading journey.'
-              : 'Create your account and begin a simple, steady reading habit.'}
-          </p>
-
-          <div className="auth-tabs" role="tablist" aria-label="Account options">
-            <button type="button" role="tab" aria-selected={mode === 'login'} onClick={() => changeMode('login')}>Sign in</button>
-            <button type="button" role="tab" aria-selected={mode === 'create'} onClick={() => changeMode('create')}>Create account</button>
-          </div>
+          <a className="auth-brand" href="/" aria-label="Daily Bread home"><span aria-hidden="true">🍞</span><strong>Daily Bread</strong></a>
+          <p className="auth-tagline">Your daily portion of Scripture</p>
+          {mode === 'create' && !confirmation && <h2>Create Your Account</h2>}
 
           {confirmation ? (
             <div className="confirmation-panel">
@@ -125,13 +90,13 @@ export default function WelcomePage() {
           ) : <form className="auth-form" onSubmit={submit}>
             {mode === 'create' && (
               <div className="name-row">
-                <label>First name<Input name="firstName" autoComplete="given-name" placeholder="Maya" required /></label>
-                <label>Last name<Input name="lastName" autoComplete="family-name" placeholder="Carter" required /></label>
+                <label><span className="field-label">First name</span><Input name="firstName" autoComplete="given-name" placeholder="First name" required /></label>
+                <label><span className="field-label">Last name</span><Input name="lastName" autoComplete="family-name" placeholder="Last name" required /></label>
               </div>
             )}
-            <label>Email address<Input name="email" type="email" autoComplete="email" placeholder="you@example.com" required /></label>
+            <label><span className="field-label">Email address</span><Input name="email" type="email" autoComplete="email" placeholder="Email address" required /></label>
             <label>
-              Password
+              <span className="field-label">Password</span>
               <span className="password-field">
                 <Input name="password" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} placeholder="At least 8 characters" required />
                 <button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword((value) => !value)}>
@@ -140,18 +105,18 @@ export default function WelcomePage() {
               </span>
             </label>
             {mode === 'create' && (
-              <label>Confirm password<Input name="confirmPassword" type="password" autoComplete="new-password" placeholder="Type it once more" required /></label>
+              <label><span className="field-label">Confirm password</span><Input name="confirmPassword" type="password" autoComplete="new-password" placeholder="Confirm password" required /></label>
             )}
 
             {error && <p className="form-error" role="alert">{error}</p>}
             <Button type="submit" size="lg" className="primary-action" disabled={busy}>
-              {busy ? 'Just a moment…' : mode === 'login' ? 'Sign in' : 'Create my account'}
-              <ArrowRight aria-hidden="true" />
+              {busy ? 'Just a moment…' : mode === 'login' ? 'Sign In' : 'Create Account'}
             </Button>
           </form>}
 
           {!confirmation && <p className="auth-footnote">
-            {mode === 'create' ? 'We’ll send a confirmation link to your email.' : 'New here? Choose “Create account” above to get started.'}
+            {mode === 'create' ? 'Already have an account? ' : 'Don’t have an account? '}
+            <button type="button" className="auth-switch" onClick={() => changeMode(mode === 'login' ? 'create' : 'login')}>{mode === 'login' ? 'Sign Up' : 'Sign In'}</button>
           </p>}
         </div>
       </section>

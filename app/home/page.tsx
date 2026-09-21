@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { BarChart3, BookOpen, CalendarDays, Flame, Plus, Trash2 } from 'lucide-react';
+import { BookOpen, Plus, Trash2 } from 'lucide-react';
 
 import { AppHeader } from '@/components/app-header';
 import { ReadingHeatmap } from '@/components/heatmap';
@@ -115,27 +115,15 @@ export default function HomePage() {
     return <main className="page-loading"><span className="loading-mark"><BookOpen /></span><p>Setting the table…</p></main>;
   }
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-
   return (
     <div className="app-shell">
       <AppHeader name={`${user.firstName} ${user.lastName}`} active="home" />
       <main className="dashboard-main">
-        <section className="welcome-band">
-          <div>
-            <p className="eyebrow">Your daily portion</p>
-            <h1>{greeting}, {user.firstName}.</h1>
-            <p>Ready to make a little room for the Word today?</p>
-          </div>
-          <blockquote><span>“</span>Your word is a lamp to my feet and a light to my path.<cite>Psalm 119:105</cite></blockquote>
-        </section>
-
         <section className="log-section" aria-labelledby="log-reading-title">
           <div className="log-card">
             <div className="section-heading">
               <div className="section-icon"><BookOpen aria-hidden="true" /></div>
-              <div><p className="eyebrow">Keep the habit warm</p><h2 id="log-reading-title">Log today’s reading</h2></div>
+              <div><h2 id="log-reading-title">Log Today’s Reading</h2></div>
             </div>
             <form className="reading-form" onSubmit={addReading}>
               <label>Date<Input type="date" value={date} max={localDate()} onChange={(event) => setDate(event.target.value)} required /></label>
@@ -151,17 +139,14 @@ export default function HomePage() {
                 {previewCount > 0 && <span className="verse-preview">Looks like {previewCount} {previewCount === 1 ? 'verse' : 'verses'}</span>}
               </div>
             </form>
-          </div>
-
-          <aside className="stats-card" aria-label="Reading statistics">
-            <p className="eyebrow">Your progress</p>
-            <h2>Small portions add up.</h2>
-            <div className="stat-list">
-              <div><span className="stat-icon verses"><BarChart3 /></span><span><strong>{stats.totalVerses.toLocaleString()}</strong><small>Total verses</small></span></div>
-              <div><span className="stat-icon streak"><Flame /></span><span><strong>{stats.streak}</strong><small>Day streak</small></span></div>
-              <div><span className="stat-icon days"><CalendarDays /></span><span><strong>{stats.last30}</strong><small>Days read in the last 30</small></span></div>
+            <div className="stats-card" aria-label="Reading statistics">
+              <div className="stat-list">
+                <div><strong>{stats.totalVerses.toLocaleString()}</strong><small>Total Verses</small></div>
+                <div><strong>{stats.streak}</strong><small>Day Streak</small></div>
+                <div><strong>{stats.last30}</strong><small>Days Read</small></div>
+              </div>
             </div>
-          </aside>
+          </div>
         </section>
 
         <ReadingHeatmap readings={readings} />

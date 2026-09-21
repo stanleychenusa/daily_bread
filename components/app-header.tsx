@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, LogOut, Users, Wheat } from 'lucide-react';
+import { Home, LogOut, Users } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
@@ -19,7 +19,7 @@ export function AppHeader({ name, active }: AppHeaderProps) {
     <header className="site-header">
       <div className="site-header-inner">
         <a className="app-brand" href="/home" aria-label="Daily Bread home">
-          <span className="app-brand-mark"><Wheat aria-hidden="true" /></span>
+          <span className="app-brand-mark" aria-hidden="true">🍞</span>
           <span><strong>Daily Bread</strong><small>Your daily portion of Scripture.</small></span>
         </a>
         <nav className="header-actions" aria-label="Account navigation">
