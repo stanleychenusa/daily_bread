@@ -132,11 +132,15 @@ export default function HomePage() {
                 <Input value={passage} onChange={(event) => setPassage(event.target.value)} placeholder="e.g., Luke 5:1-11, 17-26; Psalm 23:1-6" required />
                 <small>Use commas for verse ranges in the same chapter; semicolons for different chapters and different books.</small>
               </label>
+              {previewCount > 0 && (
+                <p className="verse-preview" aria-live="polite">
+                  That looks like {previewCount} {previewCount === 1 ? 'verse' : 'verses'}.
+                </p>
+              )}
               <div className="reading-submit-row">
                 <Button type="submit" size="lg" className="add-reading-button" disabled={saving}>
                   <Plus aria-hidden="true" /> {saving ? 'Adding…' : 'Add reading'}
                 </Button>
-                {previewCount > 0 && <span className="verse-preview">Looks like {previewCount} {previewCount === 1 ? 'verse' : 'verses'}</span>}
               </div>
             </form>
             <div className="stats-card" aria-label="Reading statistics">
@@ -152,7 +156,7 @@ export default function HomePage() {
         <ReadingHeatmap readings={readings} />
 
         <section className="clear-section">
-          <div><h2>Need a fresh start?</h2><p>This clears your reading history and statistics. Your account and teams will stay right where they are.</p></div>
+          <div><h2>Need a fresh start?</h2></div>
           <AlertDialog>
             <AlertDialogTrigger render={<Button variant="destructive" size="lg" />}><Trash2 aria-hidden="true" /> Clear all data</AlertDialogTrigger>
             <AlertDialogContent>

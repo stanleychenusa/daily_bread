@@ -48,9 +48,7 @@ export function ReadingHeatmap({ readings }: { readings: Reading[] }) {
     <section className="activity-section" aria-labelledby="reading-activity-title">
       <div className="section-heading activity-heading">
         <div>
-          <p className="eyebrow">A year at a glance</p>
           <h2 id="reading-activity-title">Your Reading Journey</h2>
-          <p>Every little square is time you made for Scripture.</p>
         </div>
         <div className="heat-legend" aria-label="Reading volume: less to more">
           <span>Less</span>
