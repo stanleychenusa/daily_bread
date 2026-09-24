@@ -223,6 +223,11 @@
 .passage-select [data-slot="native-select"] { height: 2.65rem; border: 1.4px solid #aa7c4a; border-radius: .68rem; color: #4a3426; background: rgb(255 255 252 / 58%); font-size: .72rem; }
 .passage-select [data-slot="native-select"]:focus-visible { border-color: #c35a06; box-shadow: 0 0 0 3px rgb(195 90 6 / 13%); }
 .range-to { display: grid; place-items: center; height: 2.65rem; color: #946039; font: 700 1rem var(--font-caveat), cursive; }
+.passage-shortcuts { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem .65rem; margin-top: .65rem; padding-top: .65rem; border-top: 1px dashed rgb(170 124 74 / 45%); }
+.whole-chapter-button { min-height: 2rem; border-color: #bd8c59; color: #84420f; background: rgb(255 251 241 / 58%); font-size: .64rem; font-weight: 750; }
+.whole-chapter-button:hover { border-color: #a85a1e; background: #fae8c9; }
+.whole-chapter-button.active { border-color: #a24a0f; color: #6d2f0b; background: #f2d4a6; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 42%); }
+.passage-shortcuts > span { flex: 1 1 220px; color: #6f5a49; font-size: .61rem; line-height: 1.4; }
 .add-passage-button { justify-self: start; min-height: 2.2rem; border-color: #bd8c59; color: #84420f; background: rgb(255 251 241 / 50%); font-size: .68rem; font-weight: 750; }
 .reading-submit-row { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
 .add-reading-button { flex: 1 1 100%; height: 2.75rem; border: 1px solid #8d3d06; border-radius: .68rem; background: linear-gradient(90deg, #cf6207, #df7b0d 55%, #cb5b03); color: white; font-weight: 800; box-shadow: 0 5px 11px rgb(95 48 14 / 17%), inset 0 1px 0 rgb(255 255 255 / 20%); }
@@ -341,6 +346,7 @@
   .header-button { flex: 1; }
   .passage-range-fields { grid-template-columns: 1fr 1fr; }
   .range-book-field { grid-column: 1 / -1; }
+  .whole-chapter-button { width: 100%; }
   .stat-list { gap: .45rem; }
   .stat-list > div { min-height: 4.2rem; padding: .5rem .25rem; }
   .stat-list strong { font-size: 1.45rem; }

@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { BookOpen, Plus, Trash2, X } from 'lucide-react';
+import { BookOpen, Check, Plus, Trash2, X } from 'lucide-react';
 
 import { AppHeader } from '@/components/app-header';
 import { ReadingHeatmap } from '@/components/heatmap';
@@ -25,9 +25,10 @@ import { BIBLE_BOOKS, countBibleRange, getBibleBook, validateBibleRange, type Bi
 import { fetchCurrentUser, readJson, type User } from '@/lib/client';
 
 type Reading = { id: string; readingDate: string; passage: string; verseCount: number };
+type PassageDraft = BibleRangeInput & { wholeChapters: boolean };
 
-function emptyPassage(): BibleRangeInput {
-  return { book: '', startChapter: 1, startVerse: 1, endChapter: 1, endVerse: 1 };
+function emptyPassage(): PassageDraft {
+  return { book: '', startChapter: 1, startVerse: 1, endChapter: 1, endVerse: 1, wholeChapters: false };
 }
 
 function numberOptions(start: number, end: number) {
@@ -64,7 +65,7 @@ export default function HomePage() {
   const [user, setUser] = useState<User | null>(null);
   const [readings, setReadings] = useState<Reading[]>([]);
   const [date, setDate] = useState(localDate());
-  const [passages, setPassages] = useState<BibleRangeInput[]>([emptyPassage()]);
+  const [passages, setPassages] = useState<PassageDraft[]>([emptyPassage()]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [clearAllOpen, setClearAllOpen] = useState(false);
@@ -104,7 +105,16 @@ export default function HomePage() {
       const response = await fetch('/api/readings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, ranges: passages }),
+        body: JSON.stringify({
+          date,
+          ranges: passages.map((range) => ({
+            book: range.book,
+            startChapter: range.startChapter,
+            startVerse: range.startVerse,
+            endChapter: range.endChapter,
+            endVerse: range.endVerse,
+          })),
+        }),
       });
       const data = await readJson<{ reading: Reading }>(response);
       setReadings((current) => [data.reading, ...current]);
@@ -117,7 +127,7 @@ export default function HomePage() {
     }
   }
 
-  function updatePassage(index: number, updater: (current: BibleRangeInput) => BibleRangeInput) {
+  function updatePassage(index: number, updater: (current: PassageDraft) => PassageDraft) {
     setPassages((current) => current.map((range, rangeIndex) => rangeIndex === index ? updater(range) : range));
   }
 
@@ -175,6 +185,11 @@ export default function HomePage() {
                     const startVerseCount = book?.verseCounts[range.startChapter - 1] ?? 0;
                     const endVerseCount = book?.verseCounts[range.endChapter - 1] ?? 0;
                     const firstEndVerse = range.endChapter === range.startChapter ? range.startVerse : 1;
+                    const wholeChapterSummary = book && range.wholeChapters
+                      ? range.startChapter === range.endChapter
+                        ? `Every verse in ${book.name} ${range.startChapter} is included.`
+                        : `Every verse from ${book.name} ${range.startChapter} through ${range.endChapter} is included.`
+                      : '';
 
                     return (
                       <div className="passage-range-card" key={index}>
@@ -221,7 +236,14 @@ export default function HomePage() {
                               disabled={!book}
                               onChange={(event) => {
                                 const chapter = Number(event.target.value);
-                                updatePassage(index, (current) => ({ ...current, startChapter: chapter, startVerse: 1, endChapter: chapter, endVerse: 1 }));
+                                const lastVerse = book?.verseCounts[chapter - 1] ?? 1;
+                                updatePassage(index, (current) => ({
+                                  ...current,
+                                  startChapter: chapter,
+                                  startVerse: 1,
+                                  endChapter: chapter,
+                                  endVerse: current.wholeChapters ? lastVerse : 1,
+                                }));
                               }}
                             >
                               {numberOptions(1, chapterCount).map((chapter) => <NativeSelectOption key={chapter} value={chapter}>{chapter}</NativeSelectOption>)}
@@ -233,7 +255,7 @@ export default function HomePage() {
                               id={`passage-${index}-start-verse`}
                               className="passage-select"
                               value={range.startVerse}
-                              disabled={!book}
+                              disabled={!book || range.wholeChapters}
                               onChange={(event) => {
                                 const verse = Number(event.target.value);
                                 updatePassage(index, (current) => ({
@@ -256,10 +278,13 @@ export default function HomePage() {
                               disabled={!book}
                               onChange={(event) => {
                                 const chapter = Number(event.target.value);
+                                const lastVerse = book?.verseCounts[chapter - 1] ?? 1;
                                 updatePassage(index, (current) => ({
                                   ...current,
                                   endChapter: chapter,
-                                  endVerse: chapter === current.startChapter ? current.startVerse : 1,
+                                  endVerse: current.wholeChapters
+                                    ? lastVerse
+                                    : chapter === current.startChapter ? current.startVerse : 1,
                                 }));
                               }}
                             >
@@ -272,12 +297,38 @@ export default function HomePage() {
                               id={`passage-${index}-end-verse`}
                               className="passage-select"
                               value={range.endVerse}
-                              disabled={!book}
+                              disabled={!book || range.wholeChapters}
                               onChange={(event) => updatePassage(index, (current) => ({ ...current, endVerse: Number(event.target.value) }))}
                             >
                               {numberOptions(firstEndVerse, endVerseCount).map((verse) => <NativeSelectOption key={verse} value={verse}>{verse}</NativeSelectOption>)}
                             </NativeSelect>
                           </label>
+                        </div>
+                        <div className="passage-shortcuts">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className={`whole-chapter-button${range.wholeChapters ? ' active' : ''}`}
+                            aria-pressed={range.wholeChapters}
+                            disabled={!book}
+                            onClick={() => updatePassage(index, (current) => {
+                              if (!book) return current;
+                              if (current.wholeChapters) return { ...current, wholeChapters: false };
+                              return {
+                                ...current,
+                                wholeChapters: true,
+                                startVerse: 1,
+                                endVerse: book.verseCounts[current.endChapter - 1] ?? 1,
+                              };
+                            })}
+                          >
+                            {range.wholeChapters ? <Check aria-hidden="true" /> : <BookOpen aria-hidden="true" />}
+                            {range.wholeChapters ? 'Entire chapter(s) selected' : 'Use entire chapter(s)'}
+                          </Button>
+                          <span>
+                            {wholeChapterSummary || 'Fills in every verse. Choose a later end chapter to include several full chapters.'}
+                          </span>
                         </div>
                       </div>
                     );
