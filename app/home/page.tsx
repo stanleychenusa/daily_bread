@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { BookOpen, Plus, Trash2 } from 'lucide-react';
+import { BookOpen, Plus, Trash2, X } from 'lucide-react';
 
 import { AppHeader } from '@/components/app-header';
 import { ReadingHeatmap } from '@/components/heatmap';
@@ -20,10 +20,19 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NativeSelect, NativeSelectOptGroup, NativeSelectOption } from '@/components/ui/native-select';
+import { BIBLE_BOOKS, countBibleRange, getBibleBook, validateBibleRange, type BibleRangeInput } from '@/lib/bible';
 import { fetchCurrentUser, readJson, type User } from '@/lib/client';
-import { countVerses } from '@/lib/reading';
 
 type Reading = { id: string; readingDate: string; passage: string; verseCount: number };
+
+function emptyPassage(): BibleRangeInput {
+  return { book: '', startChapter: 1, startVerse: 1, endChapter: 1, endVerse: 1 };
+}
+
+function numberOptions(start: number, end: number) {
+  return Array.from({ length: Math.max(0, end - start + 1) }, (_, index) => start + index);
+}
 
 function localDate(date = new Date()) {
   const year = date.getFullYear();
@@ -55,14 +64,14 @@ export default function HomePage() {
   const [user, setUser] = useState<User | null>(null);
   const [readings, setReadings] = useState<Reading[]>([]);
   const [date, setDate] = useState(localDate());
-  const [passage, setPassage] = useState('');
+  const [passages, setPassages] = useState<BibleRangeInput[]>([emptyPassage()]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [clearAllOpen, setClearAllOpen] = useState(false);
   const [clearingAll, setClearingAll] = useState(false);
   const [status, setStatus] = useState<{ message: string; tone: 'success' | 'error' } | null>(null);
   const stats = useMemo(() => getStats(readings), [readings]);
-  const previewCount = countVerses(passage);
+  const previewCount = useMemo(() => passages.reduce((total, range) => total + countBibleRange(range), 0), [passages]);
 
   useEffect(() => {
     Promise.all([
@@ -85,22 +94,31 @@ export default function HomePage() {
 
   async function addReading(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const rangeError = passages.map(validateBibleRange).find(Boolean);
+    if (rangeError) {
+      setStatus({ message: rangeError, tone: 'error' });
+      return;
+    }
     setSaving(true);
     try {
       const response = await fetch('/api/readings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, passage }),
+        body: JSON.stringify({ date, ranges: passages }),
       });
       const data = await readJson<{ reading: Reading }>(response);
       setReadings((current) => [data.reading, ...current]);
-      setPassage('');
-      setStatus({ message: `${data.reading.verseCount} verses added to your rhythm.`, tone: 'success' });
+      setPassages([emptyPassage()]);
+      setStatus({ message: `${data.reading.verseCount} ${data.reading.verseCount === 1 ? 'verse' : 'verses'} added to your rhythm.`, tone: 'success' });
     } catch (error) {
       setStatus({ message: error instanceof Error ? error.message : 'Could not add that reading.', tone: 'error' });
     } finally {
       setSaving(false);
     }
+  }
+
+  function updatePassage(index: number, updater: (current: BibleRangeInput) => BibleRangeInput) {
+    setPassages((current) => current.map((range, rangeIndex) => rangeIndex === index ? updater(range) : range));
   }
 
   async function clearReadings() {
@@ -146,12 +164,135 @@ export default function HomePage() {
               <div><h2 id="log-reading-title">Log Today’s Reading</h2></div>
             </div>
             <form className="reading-form" onSubmit={addReading}>
-              <label>Date<Input type="date" value={date} max={localDate()} onChange={(event) => setDate(event.target.value)} required /></label>
-              <label className="passage-field">
-                What did you read?
-                <Input value={passage} onChange={(event) => setPassage(event.target.value)} placeholder="e.g., Luke 5:1-11, 17-26; Psalm 23:1-6" required />
-                <small>Use commas for verse ranges in the same chapter; semicolons for different chapters and different books.</small>
-              </label>
+              <label htmlFor="reading-date">Date<Input id="reading-date" type="date" value={date} max={localDate()} onChange={(event) => setDate(event.target.value)} required /></label>
+              <fieldset className="passage-builder">
+                <legend>What did you read?</legend>
+                <p className="passage-helper">Choose a starting and ending verse. Add another passage if you read from more than one place.</p>
+                <div className="passage-list">
+                  {passages.map((range, index) => {
+                    const book = getBibleBook(range.book);
+                    const chapterCount = book?.verseCounts.length ?? 0;
+                    const startVerseCount = book?.verseCounts[range.startChapter - 1] ?? 0;
+                    const endVerseCount = book?.verseCounts[range.endChapter - 1] ?? 0;
+                    const firstEndVerse = range.endChapter === range.startChapter ? range.startVerse : 1;
+
+                    return (
+                      <div className="passage-range-card" key={index}>
+                        <div className="passage-range-heading">
+                          <strong>Passage {index + 1}</strong>
+                          {passages.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="remove-passage-button"
+                              aria-label={`Remove passage ${index + 1}`}
+                              onClick={() => setPassages((current) => current.filter((_, rangeIndex) => rangeIndex !== index))}
+                            >
+                              <X aria-hidden="true" /> Remove
+                            </Button>
+                          )}
+                        </div>
+                        <div className="passage-range-fields">
+                          <label className="range-book-field" htmlFor={`passage-${index}-book`}>
+                            Book
+                            <NativeSelect
+                              id={`passage-${index}-book`}
+                              className="passage-select"
+                              value={range.book}
+                              required
+                              onChange={(event) => updatePassage(index, () => ({ ...emptyPassage(), book: event.target.value }))}
+                            >
+                              <NativeSelectOption value="" disabled>Select a book</NativeSelectOption>
+                              <NativeSelectOptGroup label="Old Testament">
+                                {BIBLE_BOOKS.slice(0, 39).map((option) => <NativeSelectOption key={option.id} value={option.id}>{option.name}</NativeSelectOption>)}
+                              </NativeSelectOptGroup>
+                              <NativeSelectOptGroup label="New Testament">
+                                {BIBLE_BOOKS.slice(39).map((option) => <NativeSelectOption key={option.id} value={option.id}>{option.name}</NativeSelectOption>)}
+                              </NativeSelectOptGroup>
+                            </NativeSelect>
+                          </label>
+                          <label htmlFor={`passage-${index}-start-chapter`}>
+                            Start chapter
+                            <NativeSelect
+                              id={`passage-${index}-start-chapter`}
+                              className="passage-select"
+                              value={range.startChapter}
+                              disabled={!book}
+                              onChange={(event) => {
+                                const chapter = Number(event.target.value);
+                                updatePassage(index, (current) => ({ ...current, startChapter: chapter, startVerse: 1, endChapter: chapter, endVerse: 1 }));
+                              }}
+                            >
+                              {numberOptions(1, chapterCount).map((chapter) => <NativeSelectOption key={chapter} value={chapter}>{chapter}</NativeSelectOption>)}
+                            </NativeSelect>
+                          </label>
+                          <label htmlFor={`passage-${index}-start-verse`}>
+                            Start verse
+                            <NativeSelect
+                              id={`passage-${index}-start-verse`}
+                              className="passage-select"
+                              value={range.startVerse}
+                              disabled={!book}
+                              onChange={(event) => {
+                                const verse = Number(event.target.value);
+                                updatePassage(index, (current) => ({
+                                  ...current,
+                                  startVerse: verse,
+                                  endVerse: current.endChapter === current.startChapter ? Math.max(current.endVerse, verse) : current.endVerse,
+                                }));
+                              }}
+                            >
+                              {numberOptions(1, startVerseCount).map((verse) => <NativeSelectOption key={verse} value={verse}>{verse}</NativeSelectOption>)}
+                            </NativeSelect>
+                          </label>
+                          <span className="range-to" aria-hidden="true">to</span>
+                          <label htmlFor={`passage-${index}-end-chapter`}>
+                            End chapter
+                            <NativeSelect
+                              id={`passage-${index}-end-chapter`}
+                              className="passage-select"
+                              value={range.endChapter}
+                              disabled={!book}
+                              onChange={(event) => {
+                                const chapter = Number(event.target.value);
+                                updatePassage(index, (current) => ({
+                                  ...current,
+                                  endChapter: chapter,
+                                  endVerse: chapter === current.startChapter ? current.startVerse : 1,
+                                }));
+                              }}
+                            >
+                              {numberOptions(range.startChapter, chapterCount).map((chapter) => <NativeSelectOption key={chapter} value={chapter}>{chapter}</NativeSelectOption>)}
+                            </NativeSelect>
+                          </label>
+                          <label htmlFor={`passage-${index}-end-verse`}>
+                            End verse
+                            <NativeSelect
+                              id={`passage-${index}-end-verse`}
+                              className="passage-select"
+                              value={range.endVerse}
+                              disabled={!book}
+                              onChange={(event) => updatePassage(index, (current) => ({ ...current, endVerse: Number(event.target.value) }))}
+                            >
+                              {numberOptions(firstEndVerse, endVerseCount).map((verse) => <NativeSelectOption key={verse} value={verse}>{verse}</NativeSelectOption>)}
+                            </NativeSelect>
+                          </label>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="add-passage-button"
+                  disabled={passages.length >= 20}
+                  onClick={() => setPassages((current) => [...current, emptyPassage()])}
+                >
+                  <Plus aria-hidden="true" /> Add another passage
+                </Button>
+              </fieldset>
               {previewCount > 0 && (
                 <p className="verse-preview" aria-live="polite">
                   That looks like {previewCount} {previewCount === 1 ? 'verse' : 'verses'}.

@@ -1,7 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { NextResponse } from 'next/server';
 
-import { countVerses } from '@/lib/reading';
+import { countBibleRange, formatBibleRange, isBibleRangeInput, validateBibleRange } from '@/lib/bible';
 import { getSessionUser, jsonError } from '@/lib/server';
 
 type ReadingRow = { id: string; readingDate: string; passage: string; verseCount: number };
@@ -25,14 +25,22 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const user = await getSessionUser(request);
   if (!user) return jsonError('Please sign in.', 401);
-  const body = await request.json<{ date?: string; passage?: string }>();
+  const body = await request.json<{ date?: string; ranges?: unknown }>();
   const readingDate = body.date?.trim() ?? '';
-  const passage = body.passage?.trim() ?? '';
   if (!/^\d{4}-\d{2}-\d{2}$/.test(readingDate)) return jsonError('Please choose a valid date.');
-  if (!passage) return jsonError('Please enter what you read.');
+  if (!Array.isArray(body.ranges) || body.ranges.length < 1) return jsonError('Add at least one Scripture passage.');
+  if (body.ranges.length > 20) return jsonError('You can add up to 20 passages at a time.');
 
-  const verseCount = countVerses(passage);
-  if (verseCount < 1) return jsonError('Include verse numbers, such as John 3:16-18.');
+  const ranges = [];
+  for (const candidate of body.ranges) {
+    if (!isBibleRangeInput(candidate)) return jsonError('Choose a complete Bible passage.');
+    const error = validateBibleRange(candidate);
+    if (error) return jsonError(error);
+    ranges.push(candidate);
+  }
+
+  const verseCount = ranges.reduce((total, range) => total + countBibleRange(range), 0);
+  const passage = ranges.map(formatBibleRange).join('; ');
 
   const today = new Date();
   today.setHours(23, 59, 59, 999);
