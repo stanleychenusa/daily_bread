@@ -3,7 +3,7 @@
 import { Home, LogOut, NotebookPen, Users } from 'lucide-react';
 import Link from 'next/link';
 
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 
 type AppHeaderProps = {
   name: string;
@@ -34,9 +34,9 @@ export function AppHeader({ name, active }: AppHeaderProps) {
           {navigation.filter((item) => item.key !== active).map((item) => {
             const Icon = item.icon;
             return (
-              <Button key={item.key} render={<Link href={item.href} />} variant="outline" size="lg" className="header-button">
+              <Link key={item.key} href={item.href} className={buttonVariants({ variant: 'outline', size: 'lg', className: 'header-button' })}>
                 <Icon aria-hidden="true" /> {item.label}
-              </Button>
+              </Link>
             );
           })}
           <Button type="button" variant="ghost" size="lg" className="header-button signout-button" onClick={signOut}>

@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { ArrowRight, CheckCircle2, Eye, EyeOff, Mail } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { readJson } from '@/lib/client';
 
@@ -83,7 +83,7 @@ export default function WelcomePage() {
                   : <>Email delivery isn’t connected in this preview. Use the button below to preview the confirmation step for <strong>{confirmation.email}</strong>.</>}
               </p>
               {confirmation.previewUrl && (
-                <Button render={<a href={confirmation.previewUrl} />} size="lg" className="primary-action">Preview confirmation <ArrowRight /></Button>
+                <a href={confirmation.previewUrl} className={buttonVariants({ size: 'lg', className: 'primary-action' })}>Preview confirmation <ArrowRight /></a>
               )}
               <button type="button" className="text-button" onClick={() => changeMode('login')}>Back to sign in</button>
             </div>
