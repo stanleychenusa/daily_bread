@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { CalendarDays, NotebookPen, Trash2 } from 'lucide-react';
+import { CalendarDays, History, NotebookPen, Trash2 } from 'lucide-react';
 
 import {
   AlertDialog,
@@ -53,6 +53,7 @@ export function ReadingHeatmap({
   const [clearing, setClearing] = useState(false);
   const [readingToClear, setReadingToClear] = useState<Reading | null>(null);
   const [clearingReading, setClearingReading] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const readingsByDate = useMemo(() => {
     const grouped = new Map<string, Reading[]>();
     for (const reading of readings) {
@@ -92,6 +93,7 @@ export function ReadingHeatmap({
 
   const selectedReadings = selectedDate ? readingsByDate.get(selectedDate) ?? [] : [];
   const selectedTotal = selectedReadings.reduce((total, reading) => total + reading.verseCount, 0);
+  const historyGroups = [...readingsByDate.entries()].sort(([firstDate], [secondDate]) => secondDate.localeCompare(firstDate));
 
   async function clearSelectedDay() {
     if (!selectedDate) return;
@@ -167,6 +169,12 @@ export function ReadingHeatmap({
         </div>
       </div>
 
+      <div className="history-button-row">
+        <Button type="button" variant="outline" onClick={() => setHistoryOpen(true)}>
+          <History aria-hidden="true" /> View All History
+        </Button>
+      </div>
+
       <Dialog
         open={selectedDate !== null}
         onOpenChange={(open) => {
@@ -227,6 +235,56 @@ export function ReadingHeatmap({
                 <Trash2 aria-hidden="true" /> Clear this day
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="reading-history-dialog">
+          <DialogHeader>
+            <span className="reading-day-icon"><History aria-hidden="true" /></span>
+            <DialogTitle>All Reading History</DialogTitle>
+            <DialogDescription>
+              {readings.length} {readings.length === 1 ? 'reading' : 'readings'} across {historyGroups.length} {historyGroups.length === 1 ? 'day' : 'days'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {historyGroups.length > 0 ? (
+            <div className="reading-history-list">
+              {historyGroups.map(([readingDate, dayReadings]) => {
+                const dayTotal = dayReadings.reduce((total, reading) => total + reading.verseCount, 0);
+                return (
+                  <section className="reading-history-day" key={readingDate} aria-labelledby={`history-${readingDate}`}>
+                    <header>
+                      <h3 id={`history-${readingDate}`}>{displayDate(readingDate)}</h3>
+                      <span>{dayTotal} {dayTotal === 1 ? 'verse' : 'verses'}</span>
+                    </header>
+                    <ul>
+                      {dayReadings.map((reading) => (
+                        <li key={reading.id}>
+                          <div className="reading-history-summary">
+                            <strong>{reading.passage}</strong>
+                            <span>{reading.verseCount} {reading.verseCount === 1 ? 'verse' : 'verses'}</span>
+                          </div>
+                          {reading.reflection && (
+                            <p className="reading-day-reflection">
+                              <NotebookPen aria-hidden="true" />
+                              <span>{reading.reflection}</span>
+                            </p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="reading-day-empty">Your reading history will appear here after you log your first passage.</p>
+          )}
+
+          <DialogFooter className="reading-day-footer">
+            <DialogClose render={<Button variant="outline" />}>Close</DialogClose>
           </DialogFooter>
         </DialogContent>
       </Dialog>
