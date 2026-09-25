@@ -104,7 +104,12 @@ export default function TeamsPage() {
           ) : (
             <div className="team-list">
               {teams.map((team) => (
-                <button key={team.id} type="button" className="team-row" onClick={() => setStatus({ message: 'Team detail pages are coming soon.', tone: 'success' })}>
+                <button
+                  type="button"
+                  key={team.id}
+                  className="team-row"
+                  onClick={() => window.location.assign(`/teams/${team.id}`)}
+                >
                   <span className="team-monogram">{team.name.slice(0, 2).toUpperCase()}</span>
                   <span className="team-info">
                     <strong>{team.name}</strong>

@@ -5,10 +5,72 @@ import { getSessionUser, jsonError } from '@/lib/server';
 
 type TeamRow = { id: string; name: string };
 type MemberRow = { teamId: string; id: string; firstName: string; lastName: string };
+type TeamDetailMemberRow = MemberRow & { joinedAt: number };
+type TeamJourneyRow = { userId: string; readingDate: string; verseCount: number };
+type TeamActivityRow = { id: string; userId: string; readingDate: string; passage: string; verseCount: number };
+
+function dateDaysAgo(days: number) {
+  const date = new Date();
+  date.setUTCHours(0, 0, 0, 0);
+  date.setUTCDate(date.getUTCDate() - days);
+  return date.toISOString().slice(0, 10);
+}
 
 export async function GET(request: Request) {
   const user = await getSessionUser(request);
   if (!user) return jsonError('Please sign in.', 401);
+  const teamId = new URL(request.url).searchParams.get('teamId');
+
+  if (teamId) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(teamId)) {
+      return jsonError('Please choose a valid team.');
+    }
+
+    const team = await env.DB.prepare(
+      `SELECT teams.id, teams.name FROM teams
+       JOIN team_members ON team_members.team_id = teams.id
+       WHERE teams.id = ? AND team_members.user_id = ?`,
+    ).bind(teamId, user.id).first<TeamRow>();
+    if (!team) return jsonError('We couldn’t find that team, or you no longer have access to it.', 404);
+
+    const [membersResult, journeyResult, activityResult] = await Promise.all([
+      env.DB.prepare(
+        `SELECT team_members.team_id AS teamId, users.id, users.first_name AS firstName,
+                users.last_name AS lastName, team_members.joined_at AS joinedAt
+         FROM team_members JOIN users ON users.id = team_members.user_id
+         WHERE team_members.team_id = ? ORDER BY team_members.joined_at ASC`,
+      ).bind(teamId).all<TeamDetailMemberRow>(),
+      env.DB.prepare(
+        `SELECT readings.user_id AS userId, readings.reading_date AS readingDate,
+                SUM(readings.verse_count) AS verseCount
+         FROM readings JOIN team_members ON team_members.user_id = readings.user_id
+         WHERE team_members.team_id = ? AND readings.reading_date >= ?
+         GROUP BY readings.user_id, readings.reading_date
+         ORDER BY readings.reading_date ASC`,
+      ).bind(teamId, dateDaysAgo(370)).all<TeamJourneyRow>(),
+      env.DB.prepare(
+        `SELECT id, userId, readingDate, passage, verseCount FROM (
+           SELECT readings.id, readings.user_id AS userId, readings.reading_date AS readingDate,
+                  readings.passage, readings.verse_count AS verseCount,
+                  readings.created_at AS createdAt,
+                  ROW_NUMBER() OVER (
+                    PARTITION BY readings.user_id
+                    ORDER BY readings.reading_date DESC, readings.created_at DESC
+                  ) AS readingRank
+           FROM readings JOIN team_members ON team_members.user_id = readings.user_id
+           WHERE team_members.team_id = ?
+         ) WHERE readingRank <= 3
+         ORDER BY readingDate DESC, createdAt DESC`,
+      ).bind(teamId).all<TeamActivityRow>(),
+    ]);
+
+    return NextResponse.json({
+      team: { ...team, members: membersResult.results },
+      journey: journeyResult.results,
+      activity: activityResult.results,
+    });
+  }
+
   const teamsResult = await env.DB.prepare(
     `SELECT teams.id, teams.name FROM teams
      JOIN team_members ON team_members.team_id = teams.id
