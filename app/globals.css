@@ -290,11 +290,11 @@
 .reading-day-reflection svg { width: .85rem; margin-top: .16rem; color: #a04b18; }
 .reading-day-empty { margin: .2rem 0; padding: 1rem; border: 1px dashed #c8a47d; border-radius: .7rem; color: #725e4e; background: #fffdf7; font-size: .75rem; text-align: center; }
 .reading-day-footer { background: #f3e5d1; }
-.reading-history-dialog { max-width: min(42rem, calc(100% - 2rem)); max-height: min(82vh, 48rem); border-color: #c49a6b; background: #fffaf0; box-shadow: 0 22px 60px rgb(72 42 23 / 25%); }
+.reading-history-dialog { grid-template-rows: auto minmax(0, 1fr) auto; max-width: min(42rem, calc(100% - 2rem)); max-height: min(82dvh, 48rem); overflow: hidden; border-color: #c49a6b; background: #fffaf0; box-shadow: 0 22px 60px rgb(72 42 23 / 25%); }
 .reading-history-dialog [data-slot="dialog-header"] { padding-right: 2rem; }
 .reading-history-dialog [data-slot="dialog-title"] { color: #6c301a; font: 700 1.55rem/1 var(--font-caveat), cursive; }
 .reading-history-dialog [data-slot="dialog-description"] { color: #725e4e; font-size: .72rem; }
-.reading-history-list { display: grid; gap: .8rem; min-height: 0; overflow-y: auto; padding-right: .25rem; }
+.reading-history-list { display: grid; gap: .8rem; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-right: .25rem; scrollbar-gutter: stable; }
 .reading-history-day { overflow: hidden; border: 1px solid #d4b48f; border-radius: .78rem; background: #fffdf7; }
 .reading-history-day > header { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .68rem .78rem; border-bottom: 1px solid #dfc7aa; background: #f6e7d1; }
 .reading-history-day h3 { margin: 0; color: #703319; font: 700 1.05rem/1 var(--font-caveat), cursive; }
@@ -427,7 +427,7 @@
   .reading-day-summary { align-items: flex-start; flex-direction: column; }
   .reading-day-entry-actions { width: 100%; justify-content: space-between; }
   .history-button-row button { width: 100%; }
-  .reading-history-dialog { max-width: calc(100% - 1rem); max-height: 88vh; }
+  .reading-history-dialog { max-width: calc(100% - 1rem); max-height: 88dvh; }
   .reading-history-summary { flex-direction: column; gap: .3rem; }
 }
 
