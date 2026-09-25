@@ -244,9 +244,6 @@ export function ReadingHeatmap({
           <DialogHeader>
             <span className="reading-day-icon"><History aria-hidden="true" /></span>
             <DialogTitle>All Reading History</DialogTitle>
-            <DialogDescription>
-              {readings.length} {readings.length === 1 ? 'reading' : 'readings'} across {historyGroups.length} {historyGroups.length === 1 ? 'day' : 'days'}
-            </DialogDescription>
           </DialogHeader>
 
           {historyGroups.length > 0 ? (
