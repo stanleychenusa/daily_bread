@@ -61,7 +61,7 @@ export default function ReflectionsPage() {
       <main className="reflections-main">
         <div className="teams-title-row reflections-title-row">
           <a href="/home" className={buttonVariants({ variant: 'outline', size: 'lg' })} onClick={(event) => { event.preventDefault(); window.location.assign('/home'); }}><ArrowLeft aria-hidden="true" /> Back home</a>
-          <div><p className="eyebrow">Look back and remember</p><h1>Reflections</h1><p>Your notes from time spent in Scripture.</p></div>
+          <div><h1>Reflections</h1><p>Your notes from time spent in Scripture.</p></div>
         </div>
 
         <section className="reflections-panel" aria-labelledby="your-reflections-title">

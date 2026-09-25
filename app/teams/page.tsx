@@ -70,13 +70,12 @@ export default function TeamsPage() {
       <main className="teams-main">
         <div className="teams-title-row">
           <a href="/home" className={buttonVariants({ variant: 'outline', size: 'lg' })} onClick={(event) => { event.preventDefault(); window.location.assign('/home'); }}><ArrowLeft aria-hidden="true" /> Back home</a>
-          <div><p className="eyebrow">Better together</p><h1>Teams</h1><p>Read alongside friends and keep one another encouraged.</p></div>
+          <div><h1>Teams</h1><p>Read alongside friends and keep one another encouraged.</p></div>
         </div>
 
         <section className="team-actions" aria-label="Create or join a team">
           <form className="team-action-card create-team" onSubmit={(event) => submitTeam(event, 'create')}>
             <span className="team-action-icon"><Plus aria-hidden="true" /></span>
-            <p className="eyebrow">Start something good</p>
             <h2>Create a team</h2>
             <label>Team name<Input value={createName} onChange={(event) => setCreateName(event.target.value)} placeholder="e.g., Sunday School Group" required /></label>
             <Button type="submit" size="lg" disabled={busy !== null}>{busy === 'create' ? 'Creating…' : 'Create team'}<ChevronRight /></Button>
@@ -84,7 +83,6 @@ export default function TeamsPage() {
 
           <form className="team-action-card join-team" onSubmit={(event) => submitTeam(event, 'join')}>
             <span className="team-action-icon"><Search aria-hidden="true" /></span>
-            <p className="eyebrow">Find your people</p>
             <h2>Join a team</h2>
             <label>Team name<Input value={joinName} onChange={(event) => setJoinName(event.target.value)} placeholder="Enter team name to join" required /></label>
             <Button type="submit" size="lg" variant="secondary" disabled={busy !== null}>{busy === 'join' ? 'Joining…' : 'Join team'}<ChevronRight /></Button>
