@@ -182,7 +182,7 @@
 .dashboard-main, .teams-main { width: min(100% - 2rem, 820px); margin-inline: auto; padding: 1.05rem 0 3.5rem; }
 
 .log-section { display: block; }
-.log-card, .activity-section, .your-teams, .team-action-card, .teams-title-row {
+.log-card, .activity-section, .coverage-section, .your-teams, .team-action-card, .teams-title-row {
   border: 1px solid rgb(255 255 255 / 76%);
   background: rgb(255 255 249 / 69%);
   box-shadow: 0 13px 30px rgb(83 55 31 / 15%), inset 0 0 0 1px rgb(139 94 51 / 11%);
@@ -278,6 +278,37 @@
 .reading-day-list strong { flex: 0 0 auto; color: #a44b15; font-size: .65rem; }
 .reading-day-empty { margin: .2rem 0; padding: 1rem; border: 1px dashed #c8a47d; border-radius: .7rem; color: #725e4e; background: #fffdf7; font-size: .75rem; text-align: center; }
 .reading-day-footer { background: #f3e5d1; }
+
+.coverage-section { margin-top: 1.05rem; padding: clamp(1.25rem, 3vw, 1.7rem); border-radius: 1.1rem; }
+.coverage-heading { align-items: flex-end; justify-content: space-between; }
+.coverage-title-group { display: flex; align-items: center; gap: .55rem; }
+.coverage-title-group p { margin: .25rem 0 0; color: #735f50; font-size: .68rem; line-height: 1.4; }
+.coverage-legend { display: flex; align-items: center; gap: .22rem; flex: 0 0 auto; color: #6f5d50; font-size: .56rem; }
+.coverage-swatch, .coverage-cell { display: block; border-radius: 2px; background: rgb(255 250 238 / 76%); box-shadow: inset 0 0 0 1px rgb(147 111 73 / 20%); }
+.coverage-swatch { width: 9px; height: 9px; }
+.coverage-level-1 { background: #efd39c; }
+.coverage-level-2 { background: #dfaa58; }
+.coverage-level-3 { background: #ca7421; }
+.coverage-level-4 { background: #a84c15; }
+.coverage-level-5 { background: #6f2b18; }
+.coverage-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: .55rem; margin-top: 1rem; }
+.coverage-summary > div { display: grid; justify-items: center; padding: .65rem .5rem; border: 1px solid #cfad86; border-radius: .72rem; background: rgb(255 252 244 / 42%); text-align: center; }
+.coverage-summary strong { color: #a84718; font: 700 1.25rem/1 var(--font-caveat), cursive; }
+.coverage-summary small { margin-top: .22rem; color: #655142; font-size: .58rem; font-weight: 700; }
+.coverage-map { display: grid; gap: .27rem; margin-top: 1.1rem; }
+.testament-label { display: flex; align-items: center; gap: .55rem; margin: .55rem 0 .18rem; color: #8d481b; font-size: .6rem; font-weight: 850; letter-spacing: .07em; text-transform: uppercase; }
+.testament-label::after { content: ''; height: 1px; flex: 1; background: rgb(165 111 62 / 30%); }
+.testament-label:first-child { margin-top: 0; }
+.coverage-book-row { display: grid; grid-template-columns: 92px minmax(0, 1fr); align-items: center; gap: .6rem; min-height: 11px; }
+.coverage-book-name { overflow: hidden; color: #5c493b; font-size: .57rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.coverage-chapters { display: grid; grid-template-columns: repeat(var(--chapter-count), minmax(1px, 1fr)); gap: 1px; width: min(100%, calc(var(--chapter-count) * 8px)); min-width: 0; }
+.coverage-cell { width: 100%; height: 8px; outline: none; transition: transform .12s ease, box-shadow .12s ease; }
+.coverage-cell:hover, .coverage-cell:focus-visible { z-index: 2; transform: scale(1.5); box-shadow: 0 0 0 2px #fff9ed, 0 0 0 3px #8d4a1d; }
+.coverage-tooltip { display: grid; gap: .08rem; min-width: 10.5rem; color: #fffaf1; background: #5a321f; text-align: center; }
+.coverage-tooltip span { font-size: .6rem; opacity: .78; }
+.coverage-tooltip strong { font-size: .68rem; }
+.coverage-tooltip small { font-size: .56rem; opacity: .76; }
+
 .clear-section { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; margin-top: 1rem; padding: 1rem .25rem; }
 .clear-section h2 { font-size: 1.25rem; }
 .clear-section p { max-width: 35rem; margin: .25rem 0 0; color: #6f5d4f; font-size: .68rem; line-height: 1.45; }
@@ -333,6 +364,7 @@
   .header-button { padding-inline: .7rem; }
   .team-actions { grid-template-columns: 1fr; }
   .activity-heading { align-items: flex-start; flex-direction: column; }
+  .coverage-heading { align-items: flex-start; flex-direction: column; }
   .passage-range-fields { grid-template-columns: minmax(130px, 1.4fr) repeat(2, minmax(65px, 1fr)); }
   .range-to { grid-column: 1 / -1; justify-items: start; height: auto; padding-left: .2rem; }
 }
@@ -347,6 +379,11 @@
   .passage-range-fields { grid-template-columns: 1fr 1fr; }
   .range-book-field { grid-column: 1 / -1; }
   .whole-chapter-button { width: 100%; }
+  .coverage-summary { gap: .35rem; }
+  .coverage-summary > div { padding-inline: .2rem; }
+  .coverage-summary strong { font-size: 1.05rem; }
+  .coverage-book-row { grid-template-columns: 70px minmax(0, 1fr); gap: .38rem; }
+  .coverage-book-name { font-size: .51rem; }
   .stat-list { gap: .45rem; }
   .stat-list > div { min-height: 4.2rem; padding: .5rem .25rem; }
   .stat-list strong { font-size: 1.45rem; }

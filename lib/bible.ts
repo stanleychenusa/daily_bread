@@ -21,9 +21,21 @@ export const BIBLE_BOOKS: BibleBook[] = AwokenRef.versification.order.map((book)
 }));
 
 const BIBLE_BOOK_MAP = new Map(BIBLE_BOOKS.map((book) => [book.id, book]));
+const BIBLE_BOOK_NAME_MAP = new Map(BIBLE_BOOKS.map((book) => [book.name.toLowerCase(), book]));
+
+const BIBLE_BOOK_ALIASES = new Map([
+  ['psalms', BIBLE_BOOK_NAME_MAP.get('psalm')],
+  ['song of songs', BIBLE_BOOK_NAME_MAP.get('song of solomon')],
+  ['revelations', BIBLE_BOOK_NAME_MAP.get('revelation')],
+]);
 
 export function getBibleBook(bookId: string) {
   return BIBLE_BOOK_MAP.get(bookId);
+}
+
+function getBibleBookByName(name: string) {
+  const normalized = name.toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ').trim();
+  return BIBLE_BOOK_NAME_MAP.get(normalized) ?? BIBLE_BOOK_ALIASES.get(normalized);
 }
 
 export function isBibleRangeInput(value: unknown): value is BibleRangeInput {
@@ -74,4 +86,58 @@ export function formatBibleRange(range: BibleRangeInput) {
   if (range.startChapter === range.endChapter && range.startVerse === range.endVerse) return start;
   if (range.startChapter === range.endChapter) return `${start}–${range.endVerse}`;
   return `${start}–${range.endChapter}:${range.endVerse}`;
+}
+
+export function parseBiblePassage(passage: string) {
+  const ranges: BibleRangeInput[] = [];
+  let activeBook: BibleBook | undefined;
+
+  for (const rawSection of passage.split(';')) {
+    const section = rawSection.trim();
+    if (!section) continue;
+    const expandedSection = activeBook && /^\d+\s*:/.test(section) ? `${activeBook.name} ${section}` : section;
+
+    const canonical = expandedSection.match(/^(.+?)\s+(\d+):(\d+)(?:\s*[-–—]\s*(?:(\d+):)?(\d+))?$/);
+    if (canonical) {
+      const book = getBibleBookByName(canonical[1]);
+      if (!book) continue;
+      activeBook = book;
+      const startChapter = Number(canonical[2]);
+      const startVerse = Number(canonical[3]);
+      const range: BibleRangeInput = {
+        book: book.id,
+        startChapter,
+        startVerse,
+        endChapter: canonical[4] ? Number(canonical[4]) : startChapter,
+        endVerse: canonical[5] ? Number(canonical[5]) : startVerse,
+      };
+      if (!validateBibleRange(range)) ranges.push(range);
+      continue;
+    }
+
+    // Support readings saved by the earlier free-text form, such as
+    // "Luke 5:1-11, 17-26".
+    const legacy = expandedSection.match(/^(.+?)\s+(\d+):(.+)$/);
+    if (!legacy) continue;
+    const book = getBibleBookByName(legacy[1]);
+    if (!book) continue;
+    activeBook = book;
+    const chapter = Number(legacy[2]);
+
+    for (const rawVerseRange of legacy[3].split(',')) {
+      const verseMatch = rawVerseRange.trim().match(/^(\d+)(?:\s*[-–—]\s*(\d+))?$/);
+      if (!verseMatch) continue;
+      const startVerse = Number(verseMatch[1]);
+      const range: BibleRangeInput = {
+        book: book.id,
+        startChapter: chapter,
+        startVerse,
+        endChapter: chapter,
+        endVerse: verseMatch[2] ? Number(verseMatch[2]) : startVerse,
+      };
+      if (!validateBibleRange(range)) ranges.push(range);
+    }
+  }
+
+  return ranges;
 }

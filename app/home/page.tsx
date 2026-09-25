@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { BookOpen, Check, Plus, Trash2, X } from 'lucide-react';
 
 import { AppHeader } from '@/components/app-header';
+import { BibleCoverage } from '@/components/bible-coverage';
 import { ReadingHeatmap } from '@/components/heatmap';
 import { StatusToast } from '@/components/status-toast';
 import {
@@ -366,6 +367,8 @@ export default function HomePage() {
         </section>
 
         <ReadingHeatmap readings={readings} onClearDay={clearReadingsForDate} />
+
+        <BibleCoverage readings={readings} />
 
         <section className="clear-section">
           <div><h2>Need a fresh start?</h2></div>

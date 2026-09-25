@@ -10,14 +10,10 @@ export async function GET(request: Request) {
   const user = await getSessionUser(request);
   if (!user) return jsonError('Please sign in.', 401);
 
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  start.setDate(start.getDate() - 371);
-  const startDate = start.toISOString().slice(0, 10);
   const result = await env.DB.prepare(
     `SELECT id, reading_date AS readingDate, passage, verse_count AS verseCount
-     FROM readings WHERE user_id = ? AND reading_date >= ? ORDER BY reading_date DESC, created_at DESC`,
-  ).bind(user.id, startDate).all<ReadingRow>();
+     FROM readings WHERE user_id = ? ORDER BY reading_date DESC, created_at DESC`,
+  ).bind(user.id).all<ReadingRow>();
 
   return NextResponse.json({ readings: result.results });
 }
