@@ -57,7 +57,17 @@ export async function DELETE(request: Request) {
   const user = await getSessionUser(request);
   if (!user) return jsonError('Please sign in.', 401);
 
-  const readingDate = new URL(request.url).searchParams.get('date');
+  const searchParams = new URL(request.url).searchParams;
+  const readingId = searchParams.get('id');
+  if (readingId) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(readingId)) {
+      return jsonError('Please choose a valid reading.');
+    }
+    await env.DB.prepare('DELETE FROM readings WHERE user_id = ? AND id = ?').bind(user.id, readingId).run();
+    return NextResponse.json({ ok: true, readingId });
+  }
+
+  const readingDate = searchParams.get('date');
   if (!readingDate || !/^\d{4}-\d{2}-\d{2}$/.test(readingDate)) return jsonError('Please choose a valid date.');
   await env.DB.prepare('DELETE FROM readings WHERE user_id = ? AND reading_date = ?').bind(user.id, readingDate).run();
   return NextResponse.json({ ok: true, readingDate });

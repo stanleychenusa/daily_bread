@@ -278,7 +278,10 @@
 .reading-day-list li { display: grid; gap: .65rem; padding: .72rem .78rem; border: 1px solid #d4b48f; border-radius: .7rem; color: #523728; background: #fffdf7; }
 .reading-day-summary { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
 .reading-day-summary > span { font-size: .78rem; font-weight: 700; }
-.reading-day-summary > strong { flex: 0 0 auto; color: #a44b15; font-size: .65rem; }
+.reading-day-entry-actions { display: flex; flex: 0 0 auto; align-items: center; gap: .48rem; }
+.reading-day-entry-actions > strong { color: #a44b15; font-size: .65rem; }
+.remove-reading-button { height: 1.8rem; padding-inline: .5rem; font-size: .58rem; }
+.remove-reading-button svg { width: .7rem; }
 .reading-day-reflection { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: .48rem; margin: 0; padding-top: .6rem; border-top: 1px dashed #d7b996; color: #655043; font-size: .7rem; line-height: 1.55; white-space: pre-wrap; }
 .reading-day-reflection svg { width: .85rem; margin-top: .16rem; color: #a04b18; }
 .reading-day-empty { margin: .2rem 0; padding: 1rem; border: 1px dashed #c8a47d; border-radius: .7rem; color: #725e4e; background: #fffdf7; font-size: .75rem; text-align: center; }
@@ -402,6 +405,8 @@
   .reflections-heading { grid-template-columns: auto 1fr; }
   .reflection-count { grid-column: 1 / -1; justify-self: start; margin-top: .55rem; }
   .reflection-card header { align-items: flex-start; flex-direction: column; }
+  .reading-day-summary { align-items: flex-start; flex-direction: column; }
+  .reading-day-entry-actions { width: 100%; justify-content: space-between; }
 }
 
 @media (prefers-reduced-motion: reduce) {

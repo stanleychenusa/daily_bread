@@ -136,6 +136,20 @@ export default function HomePage() {
     }
   }
 
+  async function clearReading(readingId: string) {
+    try {
+      await readJson<{ ok: boolean; readingId: string }>(
+        await fetch(`/api/readings?id=${encodeURIComponent(readingId)}`, { method: 'DELETE' }),
+      );
+      setReadings((current) => current.filter((reading) => reading.id !== readingId));
+      setStatus({ message: 'That reading has been removed.', tone: 'success' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not remove that reading.';
+      setStatus({ message, tone: 'error' });
+      throw error;
+    }
+  }
+
   if (loading || !user) {
     return <main className="page-loading"><span className="loading-mark"><BookOpen /></span><p>Setting the table…</p></main>;
   }
@@ -351,7 +365,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <ReadingHeatmap readings={readings} onClearDay={clearReadingsForDate} />
+        <ReadingHeatmap readings={readings} onClearDay={clearReadingsForDate} onClearReading={clearReading} />
 
         <BibleCoverage readings={readings} />
 

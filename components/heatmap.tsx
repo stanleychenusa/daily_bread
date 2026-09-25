@@ -42,13 +42,17 @@ function displayDate(value: string) {
 export function ReadingHeatmap({
   readings,
   onClearDay,
+  onClearReading,
 }: {
   readings: Reading[];
   onClearDay: (readingDate: string) => Promise<void>;
+  onClearReading: (readingId: string) => Promise<void>;
 }) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [confirmingClear, setConfirmingClear] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [readingToClear, setReadingToClear] = useState<Reading | null>(null);
+  const [clearingReading, setClearingReading] = useState(false);
   const readingsByDate = useMemo(() => {
     const grouped = new Map<string, Reading[]>();
     for (const reading of readings) {
@@ -103,6 +107,19 @@ export function ReadingHeatmap({
     }
   }
 
+  async function clearSelectedReading() {
+    if (!readingToClear) return;
+    setClearingReading(true);
+    try {
+      await onClearReading(readingToClear.id);
+      setReadingToClear(null);
+    } catch {
+      // The parent surfaces the error in its status toast.
+    } finally {
+      setClearingReading(false);
+    }
+  }
+
   return (
     <section className="activity-section" aria-labelledby="reading-activity-title">
       <div className="section-heading activity-heading">
@@ -150,7 +167,15 @@ export function ReadingHeatmap({
         </div>
       </div>
 
-      <Dialog open={selectedDate !== null} onOpenChange={(open) => !open && setSelectedDate(null)}>
+      <Dialog
+        open={selectedDate !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedDate(null);
+            setReadingToClear(null);
+          }
+        }}
+      >
         <DialogContent className="reading-day-dialog">
           <DialogHeader>
             <span className="reading-day-icon"><CalendarDays aria-hidden="true" /></span>
@@ -166,7 +191,21 @@ export function ReadingHeatmap({
                 <li key={reading.id}>
                   <div className="reading-day-summary">
                     <span>{reading.passage}</span>
-                    <strong>{reading.verseCount} {reading.verseCount === 1 ? 'verse' : 'verses'}</strong>
+                    <div className="reading-day-entry-actions">
+                      <strong>{reading.verseCount} {reading.verseCount === 1 ? 'verse' : 'verses'}</strong>
+                      {selectedReadings.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="remove-reading-button"
+                          aria-label={`Remove ${reading.passage}`}
+                          onClick={() => setReadingToClear(reading)}
+                        >
+                          <Trash2 aria-hidden="true" /> Remove
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   {reading.reflection && (
                     <p className="reading-day-reflection">
@@ -205,6 +244,31 @@ export function ReadingHeatmap({
             <AlertDialogCancel disabled={clearing}>Keep readings</AlertDialogCancel>
             <AlertDialogAction variant="destructive" disabled={clearing} onClick={() => void clearSelectedDay()}>
               {clearing ? 'Clearing…' : 'Yes, clear this day'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={readingToClear !== null}
+        onOpenChange={(open) => {
+          if (!open) setReadingToClear(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia><Trash2 /></AlertDialogMedia>
+            <AlertDialogTitle>Remove this reading?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {readingToClear
+                ? `${readingToClear.passage} will be permanently removed. Your other readings for this day will stay.`
+                : 'This reading will be permanently removed.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={clearingReading}>Keep reading</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" disabled={clearingReading} onClick={() => void clearSelectedReading()}>
+              {clearingReading ? 'Removing…' : 'Yes, remove it'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
