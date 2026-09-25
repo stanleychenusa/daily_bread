@@ -35,8 +35,8 @@ export function BibleCoverage({ readings }: { readings: Reading[] }) {
 
       <div className="coverage-summary" aria-label="Bible coverage summary">
         <div><strong>{formatPercent(coverage.percentCovered)}</strong><small>Bible Covered</small></div>
-        <div><strong>{coverage.totalVerseReads.toLocaleString()}</strong><small>Total Verses</small></div>
         <div><strong>{coverage.booksStarted} / 66</strong><small>Books Started</small></div>
+        <div><strong>{coverage.booksFinished} / 66</strong><small>Books Finished</small></div>
       </div>
 
       <TooltipProvider delay={100}>

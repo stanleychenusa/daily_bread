@@ -86,6 +86,7 @@ export function buildBibleCoverage(readings: CoverageReading[]) {
   let uniqueVerses = 0;
   let totalVerseReads = 0;
   let booksStarted = 0;
+  let booksFinished = 0;
 
   const books: BookCoverage[] = BIBLE_BOOKS.map((book) => {
     let bookUniqueVerses = 0;
@@ -104,13 +105,15 @@ export function buildBibleCoverage(readings: CoverageReading[]) {
         level: coverageLevel(counts),
       };
     });
+    const bookTotalVerses = book.verseCounts.reduce((total, count) => total + count, 0);
     if (bookUniqueVerses > 0) booksStarted += 1;
+    if (bookUniqueVerses === bookTotalVerses) booksFinished += 1;
     return {
       id: book.id,
       name: book.name,
       chapters,
       uniqueVerses: bookUniqueVerses,
-      totalVerses: book.verseCounts.reduce((total, count) => total + count, 0),
+      totalVerses: bookTotalVerses,
     };
   });
 
@@ -154,6 +157,7 @@ export function buildBibleCoverage(readings: CoverageReading[]) {
     totalVerses,
     totalVerseReads,
     booksStarted,
+    booksFinished,
     percentCovered: totalVerses === 0 ? 0 : (uniqueVerses / totalVerses) * 100,
   };
 }
