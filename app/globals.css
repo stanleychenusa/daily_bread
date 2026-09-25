@@ -320,7 +320,7 @@
 .team-action-icon { display: grid; place-items: center; width: 2rem; height: 2rem; margin-bottom: .75rem; border: 1px solid #bd8c56; border-radius: .65rem; color: #9b4510; background: rgb(248 223 184 / 70%); }
 .team-action-icon svg { width: .95rem; }
 .team-action-card p:not(.eyebrow) { margin: .35rem 0 1rem; color: #705e50; font-size: .7rem; line-height: 1.45; }
-.team-action-card label { margin-top: auto; }
+.team-action-card label { margin-top: 1.05rem; }
 .team-action-card button { justify-self: stretch; height: 2.55rem; margin-top: .8rem; border: 1px solid #883b06; border-radius: .65rem; background: linear-gradient(180deg, #d66b0b, #bc5103); color: white; font-weight: 800; }
 .join-team { background: rgb(255 252 244 / 63%); }
 .join-team .team-action-icon { color: #8d4b12; background: rgb(240 217 177 / 74%); }
