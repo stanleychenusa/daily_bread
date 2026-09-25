@@ -121,7 +121,6 @@ export function ReadingHeatmap({
           <div className="month-labels" aria-hidden="true">
             {monthLabels.map((month) => <span key={`${month.label}-${month.column}`} style={{ gridColumn: `${month.column + 1} / span 4` }}>{month.label}</span>)}
           </div>
-          <div className="weekday-labels" aria-hidden="true"><span>Mon</span><span>Wed</span><span>Fri</span></div>
           <TooltipProvider delay={120}>
             <div className="heat-grid">
               {days.map((day) => {

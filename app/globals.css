@@ -258,14 +258,10 @@
 .level-4 { background: #753117; }
 .heat-cell.future { opacity: .42; }
 .heatmap-scroll { overflow: visible; margin-top: 1.45rem; padding-bottom: .5rem; }
-.heatmap-layout { display: grid; grid-template-columns: 27px minmax(0, 1fr); grid-template-rows: 18px auto; gap: .35rem .55rem; width: 100%; min-width: 0; }
-.month-labels { grid-column: 2; display: grid; grid-template-columns: repeat(52, minmax(0, 1fr)); column-gap: clamp(1px, .35vw, 3px); min-width: 0; color: #725f50; font-size: .58rem; }
+.heatmap-layout { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 18px auto; gap: .35rem; width: 100%; min-width: 0; }
+.month-labels { grid-column: 1; display: grid; grid-template-columns: repeat(52, minmax(0, 1fr)); column-gap: clamp(1px, .35vw, 3px); min-width: 0; color: #725f50; font-size: .58rem; }
 .month-labels span { white-space: nowrap; }
-.weekday-labels { grid-row: 2; display: grid; grid-template-rows: repeat(7, minmax(0, 1fr)); align-items: center; row-gap: clamp(1px, .35vw, 3px); color: #786759; font-size: .52rem; }
-.weekday-labels span:nth-child(1) { grid-row: 2; }
-.weekday-labels span:nth-child(2) { grid-row: 4; }
-.weekday-labels span:nth-child(3) { grid-row: 6; }
-.heat-grid { grid-column: 2; display: grid; grid-auto-flow: column; grid-template-columns: repeat(52, minmax(0, 1fr)); grid-template-rows: repeat(7, minmax(0, 1fr)); gap: clamp(1px, .35vw, 3px); min-width: 0; }
+.heat-grid { grid-column: 1; display: grid; grid-auto-flow: column; grid-template-columns: repeat(52, minmax(0, 1fr)); grid-template-rows: repeat(7, minmax(0, 1fr)); gap: clamp(1px, .35vw, 3px); min-width: 0; }
 .heat-grid .heat-cell { width: 100%; height: auto; aspect-ratio: 1; padding: 0; border: 0; cursor: pointer; transition: transform .12s ease, box-shadow .12s ease; }
 .heat-grid .heat-cell:hover, .heat-grid .heat-cell:focus-visible { z-index: 1; transform: scale(1.35); box-shadow: 0 0 0 2px #fff9ed, 0 0 0 3px #8d4a1d; }
 .heat-grid .heat-cell.future { cursor: default; }
