@@ -15,6 +15,13 @@
       "when": 1789966139663,
       "tag": "0001_tiny_killmonger",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790307586162,
+      "tag": "0002_curved_starbolt",
+      "breakpoints": true
     }
   ]
 }

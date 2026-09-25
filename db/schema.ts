@@ -27,6 +27,7 @@ export const readings = sqliteTable('readings', {
   readingDate: text('reading_date').notNull(),
   passage: text('passage').notNull(),
   verseCount: integer('verse_count').notNull(),
+  reflection: text('reflection'),
   createdAt: integer('created_at').notNull(),
 }, (table) => [index('idx_readings_user_date').on(table.userId, table.readingDate)]);
 

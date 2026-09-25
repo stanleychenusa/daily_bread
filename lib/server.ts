@@ -27,6 +27,7 @@ const schemaStatements = [
     reading_date TEXT NOT NULL,
     passage TEXT NOT NULL,
     verse_count INTEGER NOT NULL,
+    reflection TEXT,
     created_at INTEGER NOT NULL
   )`,
   `CREATE TABLE IF NOT EXISTS teams (

@@ -22,10 +22,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOptGroup, NativeSelectOption } from '@/components/ui/native-select';
+import { Textarea } from '@/components/ui/textarea';
 import { BIBLE_BOOKS, countBibleRange, getBibleBook, validateBibleRange, type BibleRangeInput } from '@/lib/bible';
 import { fetchCurrentUser, readJson, type User } from '@/lib/client';
 
-type Reading = { id: string; readingDate: string; passage: string; verseCount: number };
+type Reading = { id: string; readingDate: string; passage: string; verseCount: number; reflection: string };
 type PassageDraft = BibleRangeInput & { wholeChapters: boolean };
 
 function emptyPassage(): PassageDraft {
@@ -67,6 +68,7 @@ export default function HomePage() {
   const [readings, setReadings] = useState<Reading[]>([]);
   const [date, setDate] = useState(localDate());
   const [passages, setPassages] = useState<PassageDraft[]>([emptyPassage()]);
+  const [reflection, setReflection] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [clearAllOpen, setClearAllOpen] = useState(false);
@@ -108,6 +110,7 @@ export default function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           date,
+          reflection,
           ranges: passages.map((range) => ({
             book: range.book,
             startChapter: range.startChapter,
@@ -120,6 +123,7 @@ export default function HomePage() {
       const data = await readJson<{ reading: Reading }>(response);
       setReadings((current) => [data.reading, ...current]);
       setPassages([emptyPassage()]);
+      setReflection('');
       setStatus({ message: `${data.reading.verseCount} ${data.reading.verseCount === 1 ? 'verse' : 'verses'} added to your rhythm.`, tone: 'success' });
     } catch (error) {
       setStatus({ message: error instanceof Error ? error.message : 'Could not add that reading.', tone: 'error' });
@@ -350,6 +354,18 @@ export default function HomePage() {
                   That looks like {previewCount} {previewCount === 1 ? 'verse' : 'verses'}.
                 </p>
               )}
+              <label className="reflection-field" htmlFor="reading-reflection">
+                <span className="reflection-label-row"><span>Reflection</span><em>Optional</em></span>
+                <Textarea
+                  id="reading-reflection"
+                  value={reflection}
+                  maxLength={5_000}
+                  rows={6}
+                  placeholder="What stood out to you? What are you learning or praying about?"
+                  onChange={(event) => setReflection(event.target.value)}
+                />
+                <small>{reflection.length.toLocaleString()} / 5,000 characters</small>
+              </label>
               <div className="reading-submit-row">
                 <Button type="submit" size="lg" className="add-reading-button" disabled={saving}>
                   <Plus aria-hidden="true" /> {saving ? 'Adding…' : 'Add reading'}

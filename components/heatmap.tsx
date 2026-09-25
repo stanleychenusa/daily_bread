@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { CalendarDays, Trash2 } from 'lucide-react';
+import { CalendarDays, NotebookPen, Trash2 } from 'lucide-react';
 
 import {
   AlertDialog,
@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-type Reading = { id: string; readingDate: string; passage: string; verseCount: number };
+type Reading = { id: string; readingDate: string; passage: string; verseCount: number; reflection: string };
 
 function isoDate(date: Date) {
   const year = date.getFullYear();
@@ -165,8 +165,16 @@ export function ReadingHeatmap({
             <ul className="reading-day-list">
               {selectedReadings.map((reading) => (
                 <li key={reading.id}>
-                  <span>{reading.passage}</span>
-                  <strong>{reading.verseCount} {reading.verseCount === 1 ? 'verse' : 'verses'}</strong>
+                  <div className="reading-day-summary">
+                    <span>{reading.passage}</span>
+                    <strong>{reading.verseCount} {reading.verseCount === 1 ? 'verse' : 'verses'}</strong>
+                  </div>
+                  {reading.reflection && (
+                    <p className="reading-day-reflection">
+                      <NotebookPen aria-hidden="true" />
+                      <span>{reading.reflection}</span>
+                    </p>
+                  )}
                 </li>
               ))}
             </ul>
