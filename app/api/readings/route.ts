@@ -58,12 +58,7 @@ export async function DELETE(request: Request) {
   if (!user) return jsonError('Please sign in.', 401);
 
   const readingDate = new URL(request.url).searchParams.get('date');
-  if (readingDate !== null) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(readingDate)) return jsonError('Please choose a valid date.');
-    await env.DB.prepare('DELETE FROM readings WHERE user_id = ? AND reading_date = ?').bind(user.id, readingDate).run();
-    return NextResponse.json({ ok: true, readingDate });
-  }
-
-  await env.DB.prepare('DELETE FROM readings WHERE user_id = ?').bind(user.id).run();
-  return NextResponse.json({ ok: true });
+  if (!readingDate || !/^\d{4}-\d{2}-\d{2}$/.test(readingDate)) return jsonError('Please choose a valid date.');
+  await env.DB.prepare('DELETE FROM readings WHERE user_id = ? AND reading_date = ?').bind(user.id, readingDate).run();
+  return NextResponse.json({ ok: true, readingDate });
 }

@@ -1,24 +1,12 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { BookOpen, Check, Plus, Trash2, X } from 'lucide-react';
+import { BookOpen, Check, Plus, X } from 'lucide-react';
 
 import { AppHeader } from '@/components/app-header';
 import { BibleCoverage } from '@/components/bible-coverage';
 import { ReadingHeatmap } from '@/components/heatmap';
 import { StatusToast } from '@/components/status-toast';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOptGroup, NativeSelectOption } from '@/components/ui/native-select';
@@ -71,8 +59,6 @@ export default function HomePage() {
   const [reflection, setReflection] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [clearAllOpen, setClearAllOpen] = useState(false);
-  const [clearingAll, setClearingAll] = useState(false);
   const [status, setStatus] = useState<{ message: string; tone: 'success' | 'error' } | null>(null);
   const stats = useMemo(() => getStats(readings), [readings]);
   const previewCount = useMemo(() => passages.reduce((total, range) => total + countBibleRange(range), 0), [passages]);
@@ -134,20 +120,6 @@ export default function HomePage() {
 
   function updatePassage(index: number, updater: (current: PassageDraft) => PassageDraft) {
     setPassages((current) => current.map((range, rangeIndex) => rangeIndex === index ? updater(range) : range));
-  }
-
-  async function clearReadings() {
-    setClearingAll(true);
-    try {
-      await readJson<{ ok: boolean }>(await fetch('/api/readings', { method: 'DELETE' }));
-      setReadings([]);
-      setClearAllOpen(false);
-      setStatus({ message: 'Your reading history has been cleared.', tone: 'success' });
-    } catch (error) {
-      setStatus({ message: error instanceof Error ? error.message : 'Could not clear your readings.', tone: 'error' });
-    } finally {
-      setClearingAll(false);
-    }
   }
 
   async function clearReadingsForDate(readingDate: string) {
@@ -386,25 +358,6 @@ export default function HomePage() {
 
         <BibleCoverage readings={readings} />
 
-        <section className="clear-section">
-          <div><h2>Need a fresh start?</h2></div>
-          <AlertDialog open={clearAllOpen} onOpenChange={setClearAllOpen}>
-            <AlertDialogTrigger render={<Button variant="destructive" size="lg" />}><Trash2 aria-hidden="true" /> Clear all data</AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogMedia><Trash2 /></AlertDialogMedia>
-                <AlertDialogTitle>Clear your reading history?</AlertDialogTitle>
-                <AlertDialogDescription>This permanently removes every logged reading and resets your reading statistics. This can’t be undone.</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={clearingAll}>Keep my readings</AlertDialogCancel>
-                <AlertDialogAction variant="destructive" disabled={clearingAll} onClick={() => void clearReadings()}>
-                  {clearingAll ? 'Clearing…' : 'Yes, clear my data'}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </section>
       </main>
       {status && <StatusToast message={status.message} tone={status.tone} />}
     </div>

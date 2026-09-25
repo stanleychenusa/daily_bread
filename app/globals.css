@@ -190,7 +190,7 @@
 }
 .log-card { padding: clamp(1.25rem, 3vw, 1.7rem); border-radius: 1.1rem; }
 .section-heading { display: flex; align-items: center; gap: .55rem; }
-.section-heading h2, .team-action-card h2, .empty-teams h3, .clear-section h2 {
+.section-heading h2, .team-action-card h2, .empty-teams h3 {
   margin: 0;
   color: #6c301a;
   font: 700 1.72rem/1 var(--font-caveat), cursive;
@@ -309,10 +309,6 @@
 .coverage-tooltip strong { font-size: .68rem; }
 .coverage-tooltip small { font-size: .56rem; opacity: .76; }
 
-.clear-section { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; margin-top: 1rem; padding: 1rem .25rem; }
-.clear-section h2 { font-size: 1.25rem; }
-.clear-section p { max-width: 35rem; margin: .25rem 0 0; color: #6f5d4f; font-size: .68rem; line-height: 1.45; }
-
 /* Teams */
 .teams-main, .reflections-main { width: min(100% - 2rem, 820px); max-width: 820px; margin-inline: auto; padding: 1.05rem 0 3.5rem; }
 .teams-title-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.05rem; padding: 1.15rem 1.25rem; border-radius: 1.05rem; }
@@ -400,8 +396,6 @@
   .stat-list > div { min-height: 4.2rem; padding: .5rem .25rem; }
   .stat-list strong { font-size: 1.45rem; }
   .stat-list small { font-size: .56rem; }
-  .clear-section { align-items: stretch; flex-direction: column; }
-  .clear-section button { width: 100%; }
   .teams-title-row { align-items: flex-start; flex-direction: column; }
   .team-row { grid-template-columns: auto 1fr auto; }
   .member-names { grid-column: 2; grid-row: 2; }
