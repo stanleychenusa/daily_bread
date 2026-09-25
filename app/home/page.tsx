@@ -359,7 +359,7 @@ export default function HomePage() {
               <div className="stat-list">
                 <div><strong>{stats.totalVerses.toLocaleString()}</strong><small>Total Verses</small></div>
                 <div><strong>{stats.streak}</strong><small>Day Streak</small></div>
-                <div><strong>{stats.last30}</strong><small>Days Read</small></div>
+                <div><strong>{stats.last30}</strong><small>Days Read in the Last 30 Days</small></div>
               </div>
             </div>
           </div>
