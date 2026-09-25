@@ -154,7 +154,6 @@ export default function HomePage() {
               <label htmlFor="reading-date">Date<Input id="reading-date" type="date" value={date} max={localDate()} onChange={(event) => setDate(event.target.value)} required /></label>
               <fieldset className="passage-builder">
                 <legend>What did you read?</legend>
-                <p className="passage-helper">Choose a starting and ending verse. Add another passage if you read from more than one place.</p>
                 <div className="passage-list">
                   {passages.map((range, index) => {
                     const book = getBibleBook(range.book);
@@ -303,9 +302,7 @@ export default function HomePage() {
                             {range.wholeChapters ? <Check aria-hidden="true" /> : <BookOpen aria-hidden="true" />}
                             {range.wholeChapters ? 'Entire chapter(s) selected' : 'Use entire chapter(s)'}
                           </Button>
-                          <span>
-                            {wholeChapterSummary || 'Fills in every verse. Choose a later end chapter to include several full chapters.'}
-                          </span>
+                          {wholeChapterSummary && <span>{wholeChapterSummary}</span>}
                         </div>
                       </div>
                     );
