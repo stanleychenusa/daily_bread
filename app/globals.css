@@ -310,8 +310,9 @@
 .coverage-heading { align-items: flex-end; justify-content: space-between; }
 .coverage-title-group { display: flex; align-items: center; gap: .55rem; }
 .coverage-legend { display: flex; align-items: center; gap: .22rem; flex: 0 0 auto; color: #6f5d50; font-size: .56rem; }
-.coverage-swatch, .coverage-cell { display: block; border-radius: 2px; background: rgb(255 250 238 / 76%); box-shadow: inset 0 0 0 1px rgb(147 111 73 / 20%); }
-.coverage-swatch { width: 9px; height: 9px; }
+.coverage-swatch, .coverage-cell { display: block; background: #fffaf0; }
+.coverage-swatch { width: 9px; height: 9px; border-radius: 2px; box-shadow: inset 0 0 0 1px rgb(147 111 73 / 20%); }
+.coverage-cell { border-radius: 0; box-shadow: none; }
 .coverage-level-1 { background: #efd39c; }
 .coverage-level-2 { background: #dfaa58; }
 .coverage-level-3 { background: #ca7421; }
@@ -322,9 +323,9 @@
 .coverage-summary strong { color: #a84718; font: 700 1.25rem/1 var(--font-caveat), cursive; }
 .coverage-summary small { margin-top: .22rem; color: #655142; font-size: .58rem; font-weight: 700; }
 .coverage-map { min-width: 0; margin-top: 1.1rem; }
-.coverage-grid { display: grid; grid-template-columns: repeat(41, minmax(0, 1fr)); gap: clamp(1px, .28vw, 3px); width: 100%; min-width: 0; }
-.coverage-cell { width: 100%; height: auto; aspect-ratio: 1; outline: none; transition: transform .12s ease, box-shadow .12s ease; }
-.coverage-cell:hover, .coverage-cell:focus-visible { z-index: 2; transform: scale(1.5); box-shadow: 0 0 0 2px #fff9ed, 0 0 0 3px #8d4a1d; }
+.coverage-grid { display: grid; grid-template-columns: repeat(41, minmax(0, 1fr)); gap: 0; overflow: hidden; width: 100%; min-width: 0; border: 1px solid rgb(147 111 73 / 22%); border-radius: .65rem; background: #fffaf0; }
+.coverage-cell { width: 100%; height: auto; aspect-ratio: 1; outline: none; transition: filter .12s ease, box-shadow .12s ease; }
+.coverage-cell:hover, .coverage-cell:focus-visible { z-index: 2; filter: brightness(.9) saturate(1.08); box-shadow: inset 0 0 0 1px rgb(94 45 20 / 55%); }
 .coverage-tooltip { display: grid; gap: .08rem; min-width: 10.5rem; color: #fffaf1; background: #5a321f; text-align: center; }
 .coverage-tooltip span { font-size: .6rem; opacity: .78; }
 .coverage-tooltip strong { font-size: .68rem; }
