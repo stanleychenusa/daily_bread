@@ -78,7 +78,6 @@ export default function TeamsPage() {
             <span className="team-action-icon"><Plus aria-hidden="true" /></span>
             <p className="eyebrow">Start something good</p>
             <h2>Create a team</h2>
-            <p>Make a gathering place for people you already know.</p>
             <label>Team name<Input value={createName} onChange={(event) => setCreateName(event.target.value)} placeholder="e.g., Sunday School Group" required /></label>
             <Button type="submit" size="lg" disabled={busy !== null}>{busy === 'create' ? 'Creating…' : 'Create team'}<ChevronRight /></Button>
           </form>
@@ -87,7 +86,6 @@ export default function TeamsPage() {
             <span className="team-action-icon"><Search aria-hidden="true" /></span>
             <p className="eyebrow">Find your people</p>
             <h2>Join a team</h2>
-            <p>Enter the exact team name shared by your group.</p>
             <label>Team name<Input value={joinName} onChange={(event) => setJoinName(event.target.value)} placeholder="Enter team name to join" required /></label>
             <Button type="submit" size="lg" variant="secondary" disabled={busy !== null}>{busy === 'join' ? 'Joining…' : 'Join team'}<ChevronRight /></Button>
           </form>
@@ -95,7 +93,7 @@ export default function TeamsPage() {
 
         <section className="your-teams" aria-labelledby="your-teams-title">
           <div className="section-heading">
-            <div><p className="eyebrow">Your circles</p><h2 id="your-teams-title">Your teams</h2><p>The groups you’re reading and growing with.</p></div>
+            <div><p className="eyebrow">Your circles</p><h2 id="your-teams-title">Your teams</h2></div>
             <span className="team-count">{teams.length} {teams.length === 1 ? 'team' : 'teams'}</span>
           </div>
 
