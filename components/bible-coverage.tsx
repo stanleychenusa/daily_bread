@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useMemo, type CSSProperties } from 'react';
+import { useMemo } from 'react';
 import { BookOpen } from 'lucide-react';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -16,6 +16,7 @@ function formatPercent(value: number) {
 
 export function BibleCoverage({ readings }: { readings: Reading[] }) {
   const coverage = useMemo(() => buildBibleCoverage(readings), [readings]);
+  const chapters = coverage.books.flatMap((book) => book.chapters.map((chapter) => ({ book, chapter })));
 
   return (
     <section className="coverage-section" aria-labelledby="bible-coverage-title">
@@ -42,54 +43,34 @@ export function BibleCoverage({ readings }: { readings: Reading[] }) {
 
       <TooltipProvider delay={100}>
         <div className="coverage-map" aria-label={`${coverage.uniqueVerses.toLocaleString()} of ${coverage.totalVerses.toLocaleString()} Bible verses covered`}>
-          {coverage.books.map((book, bookIndex) => (
-            <Fragment key={book.id}>
-              {(bookIndex === 0 || bookIndex === 39) && (
-                <div className="testament-label">
-                  <span>{bookIndex === 0 ? 'Old Testament' : 'New Testament'}</span>
-                </div>
-              )}
-              <div className="coverage-book-row">
-                <span
-                  className="coverage-book-name"
-                  title={`${book.name}: ${book.uniqueVerses.toLocaleString()} of ${book.totalVerses.toLocaleString()} verses covered`}
-                >
-                  {book.name}
-                </span>
-                <div
-                  className="coverage-chapters"
-                  style={{ '--chapter-count': book.chapters.length } as CSSProperties}
-                >
-                  {book.chapters.map((chapter) => {
-                    const verseWord = chapter.uniqueVerses === 1 ? 'verse' : 'verses';
-                    const readWord = chapter.totalVerseReads === 1 ? 'read' : 'reads';
-                    const detail = chapter.totalVerseReads === 0
-                      ? `No verses covered yet`
-                      : `${chapter.uniqueVerses} of ${chapter.verseCount} ${verseWord} covered · ${chapter.totalVerseReads} total verse ${readWord}`;
-                    return (
-                      <Tooltip key={chapter.chapter}>
-                        <TooltipTrigger
-                          render={(
-                            <span
-                              className={`coverage-cell coverage-level-${chapter.level}`}
-                              role="img"
-                              tabIndex={chapter.totalVerseReads > 0 ? 0 : undefined}
-                              aria-label={`${book.name} ${chapter.chapter}: ${detail}`}
-                            />
-                          )}
-                        />
-                        <TooltipContent className="coverage-tooltip">
-                          <span>{book.name} {chapter.chapter}</span>
-                          <strong>{chapter.uniqueVerses} of {chapter.verseCount} verses covered</strong>
-                          <small>{chapter.totalVerseReads} total verse {readWord}</small>
-                        </TooltipContent>
-                      </Tooltip>
-                    );
-                  })}
-                </div>
-              </div>
-            </Fragment>
-          ))}
+          <div className="coverage-grid">
+            {chapters.map(({ book, chapter }) => {
+              const verseWord = chapter.uniqueVerses === 1 ? 'verse' : 'verses';
+              const readWord = chapter.totalVerseReads === 1 ? 'read' : 'reads';
+              const detail = chapter.totalVerseReads === 0
+                ? 'No verses covered yet'
+                : `${chapter.uniqueVerses} of ${chapter.verseCount} ${verseWord} covered · ${chapter.totalVerseReads} total verse ${readWord}`;
+              return (
+                <Tooltip key={`${book.id}-${chapter.chapter}`}>
+                  <TooltipTrigger
+                    render={(
+                      <span
+                        className={`coverage-cell coverage-level-${chapter.level}`}
+                        role="img"
+                        tabIndex={chapter.totalVerseReads > 0 ? 0 : undefined}
+                        aria-label={`${book.name} ${chapter.chapter}: ${detail}`}
+                      />
+                    )}
+                  />
+                  <TooltipContent className="coverage-tooltip">
+                    <span>{book.name} {chapter.chapter}</span>
+                    <strong>{chapter.uniqueVerses} of {chapter.verseCount} verses covered</strong>
+                    <small>{chapter.totalVerseReads} total verse {readWord}</small>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
         </div>
       </TooltipProvider>
     </section>
