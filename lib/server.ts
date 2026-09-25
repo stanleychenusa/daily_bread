@@ -153,7 +153,7 @@ export async function sendVerificationEmail(options: { email: string; firstName:
       from: env.EMAIL_FROM ?? 'Daily Bread <onboarding@resend.dev>',
       to: [options.email],
       subject: 'Confirm your Daily Bread account',
-      html: `<div style="font-family:Arial,sans-serif;color:#473528;max-width:560px;margin:auto"><h1 style="font-family:Georgia,serif">Welcome to Daily Bread, ${escapeHtml(options.firstName)}!</h1><p>Confirm your email to begin tracking your Scripture reading.</p><p><a href="${options.verificationUrl}" style="display:inline-block;background:#a86235;color:white;padding:12px 18px;border-radius:10px;text-decoration:none">Confirm my email</a></p><p style="color:#7f6b5b;font-size:13px">This link expires in 24 hours.</p></div>`,
+      html: `<div style="font-family:Arial,sans-serif;color:#473528;max-width:560px;margin:auto"><h1 style="font-family:Arial,sans-serif">Welcome to Daily Bread, ${escapeHtml(options.firstName)}!</h1><p>Confirm your email to begin tracking your Scripture reading.</p><p><a href="${options.verificationUrl}" style="display:inline-block;background:#a86235;color:white;padding:12px 18px;border-radius:10px;text-decoration:none">Confirm my email</a></p><p style="color:#7f6b5b;font-size:13px">This link expires in 24 hours.</p></div>`,
     }),
   });
   return response.ok;
