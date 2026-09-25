@@ -25,7 +25,6 @@ export function BibleCoverage({ readings }: { readings: Reading[] }) {
           <div className="section-icon"><BookOpen aria-hidden="true" /></div>
           <div>
             <h2 id="bible-coverage-title">Your Bible Coverage</h2>
-            <p>Each square is a chapter. Re-reading Scripture deepens its color.</p>
           </div>
         </div>
         <div className="coverage-legend" aria-label="Chapter reading depth: less to more">
