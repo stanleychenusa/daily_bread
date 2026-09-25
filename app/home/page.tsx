@@ -48,7 +48,7 @@ function getStats(readings: Reading[]) {
     streak += 1;
     cursor.setDate(cursor.getDate() - 1);
   }
-  return { totalVerses, last30, streak };
+  return { totalVerses, last30, streak, totalDays: days.size };
 }
 
 export default function HomePage() {
@@ -360,6 +360,7 @@ export default function HomePage() {
                 <div><strong>{stats.totalVerses.toLocaleString()}</strong><small>Total Verses</small></div>
                 <div><strong>{stats.streak}</strong><small>Day Streak</small></div>
                 <div><strong>{stats.last30}</strong><small>Days Read in the Last 30 Days</small></div>
+                <div><strong>{stats.totalDays}</strong><small>Total Days</small></div>
               </div>
             </div>
           </div>
