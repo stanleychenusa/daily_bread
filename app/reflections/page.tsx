@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, BookOpen, CalendarDays, NotebookPen } from 'lucide-react';
-import Link from 'next/link';
 
 import { AppHeader } from '@/components/app-header';
 import { StatusToast } from '@/components/status-toast';
@@ -61,7 +60,7 @@ export default function ReflectionsPage() {
       <AppHeader name={`${user.firstName} ${user.lastName}`} active="reflections" />
       <main className="reflections-main">
         <div className="teams-title-row reflections-title-row">
-          <Link href="/home" className={buttonVariants({ variant: 'outline', size: 'lg' })}><ArrowLeft aria-hidden="true" /> Back home</Link>
+          <a href="/home" className={buttonVariants({ variant: 'outline', size: 'lg' })} onClick={(event) => { event.preventDefault(); window.location.assign('/home'); }}><ArrowLeft aria-hidden="true" /> Back home</a>
           <div><p className="eyebrow">Look back and remember</p><h1>Reflections</h1><p>Your notes from time spent in Scripture.</p></div>
         </div>
 

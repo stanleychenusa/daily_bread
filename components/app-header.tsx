@@ -1,7 +1,6 @@
 'use client';
 
 import { Home, LogOut, NotebookPen, Users } from 'lucide-react';
-import Link from 'next/link';
 
 import { Button, buttonVariants } from '@/components/ui/button';
 
@@ -25,18 +24,26 @@ export function AppHeader({ name, active }: AppHeaderProps) {
   return (
     <header className="site-header">
       <div className="site-header-inner">
-        <Link className="app-brand" href="/home" aria-label="Daily Bread home">
+        <a className="app-brand" href="/home" onClick={(event) => { event.preventDefault(); window.location.assign('/home'); }}>
           <span className="app-brand-mark" aria-hidden="true">🍞</span>
           <span><strong>Daily Bread</strong><small>Your daily portion of Scripture.</small></span>
-        </Link>
+        </a>
         <nav className="header-actions" aria-label="Account navigation">
           <span className="user-chip"><span>{name.slice(0, 1).toUpperCase()}</span>{name}</span>
           {navigation.filter((item) => item.key !== active).map((item) => {
             const Icon = item.icon;
             return (
-              <Link key={item.key} href={item.href} className={buttonVariants({ variant: 'outline', size: 'lg', className: 'header-button' })}>
+              <a
+                key={item.key}
+                href={item.href}
+                className={buttonVariants({ variant: 'outline', size: 'lg', className: 'header-button' })}
+                onClick={(event) => {
+                  event.preventDefault();
+                  window.location.assign(item.href);
+                }}
+              >
                 <Icon aria-hidden="true" /> {item.label}
-              </Link>
+              </a>
             );
           })}
           <Button type="button" variant="ghost" size="lg" className="header-button signout-button" onClick={signOut}>

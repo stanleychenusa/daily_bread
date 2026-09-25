@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { ArrowLeft, ChevronRight, Plus, Search, Users } from 'lucide-react';
-import Link from 'next/link';
 
 import { AppHeader } from '@/components/app-header';
 import { StatusToast } from '@/components/status-toast';
@@ -70,7 +69,7 @@ export default function TeamsPage() {
       <AppHeader name={`${user.firstName} ${user.lastName}`} active="teams" />
       <main className="teams-main">
         <div className="teams-title-row">
-          <Link href="/home" className={buttonVariants({ variant: 'outline', size: 'lg' })}><ArrowLeft aria-hidden="true" /> Back home</Link>
+          <a href="/home" className={buttonVariants({ variant: 'outline', size: 'lg' })} onClick={(event) => { event.preventDefault(); window.location.assign('/home'); }}><ArrowLeft aria-hidden="true" /> Back home</a>
           <div><p className="eyebrow">Better together</p><h1>Teams</h1><p>Read alongside friends and keep one another encouraged.</p></div>
         </div>
 
