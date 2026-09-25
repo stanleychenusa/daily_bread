@@ -36,6 +36,10 @@ type CoveredVerse = {
   reads: number;
 };
 
+const COVERAGE_COLUMNS = 41;
+const COVERAGE_ROWS = 30;
+const COVERAGE_BLOCK_COUNT = COVERAGE_COLUMNS * COVERAGE_ROWS;
+
 function coverageLevel(counts: number[]) {
   const totalVerseReads = counts.reduce((total, count) => total + count, 0);
   if (totalVerseReads === 0) return 0;
@@ -136,8 +140,10 @@ export function buildBibleCoverage(readings: CoverageReading[]) {
   );
 
   const blocks: VerseCoverageBlock[] = [];
-  for (let index = 0; index < verses.length; index += 25) {
-    const blockVerses = verses.slice(index, index + 25);
+  for (let index = 0; index < COVERAGE_BLOCK_COUNT; index += 1) {
+    const start = Math.floor((index * verses.length) / COVERAGE_BLOCK_COUNT);
+    const end = Math.floor(((index + 1) * verses.length) / COVERAGE_BLOCK_COUNT);
+    const blockVerses = verses.slice(start, end);
     const counts = blockVerses.map((verse) => verse.reads);
     blocks.push({
       id: blocks.length,
