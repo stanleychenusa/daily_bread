@@ -18,16 +18,48 @@ export type BookCoverage = {
   totalVerses: number;
 };
 
-function coverageLevel(counts: number[], verseCount: number) {
+export type VerseCoverageBlock = {
+  id: number;
+  rangeLabel: string;
+  verseCount: number;
+  uniqueVerses: number;
+  totalVerseReads: number;
+  rereadVerseCount: number;
+  level: number;
+};
+
+type CoveredVerse = {
+  bookId: string;
+  bookName: string;
+  chapter: number;
+  verse: number;
+  reads: number;
+};
+
+function coverageLevel(counts: number[]) {
   const totalVerseReads = counts.reduce((total, count) => total + count, 0);
   if (totalVerseReads === 0) return 0;
-  const deepestRepeat = Math.max(...counts);
-  const score = (totalVerseReads / verseCount) + Math.min(Math.max(deepestRepeat - 1, 0), 2) * 0.25;
-  if (score < 0.3) return 1;
-  if (score < 0.8) return 2;
-  if (score < 1.4) return 3;
-  if (score < 2.4) return 4;
-  return 5;
+  const uniqueVerses = counts.filter((count) => count > 0).length;
+  const rereadVerseCount = counts.filter((count) => count > 1).length;
+  const extraReads = totalVerseReads - uniqueVerses;
+  const coverageRatio = uniqueVerses / counts.length;
+  let level = coverageRatio < 0.34 ? 1 : coverageRatio < 0.84 ? 2 : 3;
+
+  // Any reread deepens the block, even when only part of it was reread.
+  if (rereadVerseCount > 0) level += 1;
+  if (extraReads >= counts.length || counts.some((count) => count >= 3)) level += 1;
+  return Math.min(level, 5);
+}
+
+function verseLabel(verse: CoveredVerse) {
+  return `${verse.bookName} ${verse.chapter}:${verse.verse}`;
+}
+
+function blockRangeLabel(first: CoveredVerse, last: CoveredVerse) {
+  if (first.bookId !== last.bookId) return `${verseLabel(first)}–${verseLabel(last)}`;
+  if (first.chapter !== last.chapter) return `${verseLabel(first)}–${last.chapter}:${last.verse}`;
+  if (first.verse === last.verse) return verseLabel(first);
+  return `${verseLabel(first)}–${last.verse}`;
 }
 
 export function buildBibleCoverage(readings: CoverageReading[]) {
@@ -69,7 +101,7 @@ export function buildBibleCoverage(readings: CoverageReading[]) {
         verseCount,
         uniqueVerses: chapterUniqueVerses,
         totalVerseReads: chapterTotalVerseReads,
-        level: coverageLevel(counts, verseCount),
+        level: coverageLevel(counts),
       };
     });
     if (bookUniqueVerses > 0) booksStarted += 1;
@@ -87,8 +119,37 @@ export function buildBibleCoverage(readings: CoverageReading[]) {
     0,
   );
 
+  const verses: CoveredVerse[] = BIBLE_BOOKS.flatMap((book) =>
+    book.verseCounts.flatMap((verseCount, chapterIndex) => {
+      const counts = verseReads.get(book.id)?.[chapterIndex] ?? [];
+      return Array.from({ length: verseCount }, (_, verseIndex) => ({
+        bookId: book.id,
+        bookName: book.name,
+        chapter: chapterIndex + 1,
+        verse: verseIndex + 1,
+        reads: counts[verseIndex] ?? 0,
+      }));
+    }),
+  );
+
+  const blocks: VerseCoverageBlock[] = [];
+  for (let index = 0; index < verses.length; index += 25) {
+    const blockVerses = verses.slice(index, index + 25);
+    const counts = blockVerses.map((verse) => verse.reads);
+    blocks.push({
+      id: blocks.length,
+      rangeLabel: blockRangeLabel(blockVerses[0], blockVerses[blockVerses.length - 1]),
+      verseCount: blockVerses.length,
+      uniqueVerses: counts.filter((count) => count > 0).length,
+      totalVerseReads: counts.reduce((total, count) => total + count, 0),
+      rereadVerseCount: counts.filter((count) => count > 1).length,
+      level: coverageLevel(counts),
+    });
+  }
+
   return {
     books,
+    blocks,
     uniqueVerses,
     totalVerses,
     totalVerseReads,

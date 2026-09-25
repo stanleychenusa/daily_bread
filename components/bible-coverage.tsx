@@ -16,7 +16,6 @@ function formatPercent(value: number) {
 
 export function BibleCoverage({ readings }: { readings: Reading[] }) {
   const coverage = useMemo(() => buildBibleCoverage(readings), [readings]);
-  const chapters = coverage.books.flatMap((book) => book.chapters.map((chapter) => ({ book, chapter })));
 
   return (
     <section className="coverage-section" aria-labelledby="bible-coverage-title">
@@ -27,7 +26,7 @@ export function BibleCoverage({ readings }: { readings: Reading[] }) {
             <h2 id="bible-coverage-title">Your Bible Coverage</h2>
           </div>
         </div>
-        <div className="coverage-legend" aria-label="Chapter reading depth: less to more">
+        <div className="coverage-legend" aria-label="Verse-block reading depth: less to more">
           <span>Less</span>
           {[0, 1, 2, 3, 4, 5].map((level) => <i key={level} className={`coverage-swatch coverage-level-${level}`} />)}
           <span>More</span>
@@ -43,28 +42,29 @@ export function BibleCoverage({ readings }: { readings: Reading[] }) {
       <TooltipProvider delay={100}>
         <div className="coverage-map" aria-label={`${coverage.uniqueVerses.toLocaleString()} of ${coverage.totalVerses.toLocaleString()} Bible verses covered`}>
           <div className="coverage-grid">
-            {chapters.map(({ book, chapter }) => {
-              const verseWord = chapter.uniqueVerses === 1 ? 'verse' : 'verses';
-              const readWord = chapter.totalVerseReads === 1 ? 'read' : 'reads';
-              const detail = chapter.totalVerseReads === 0
+            {coverage.blocks.map((block) => {
+              const verseWord = block.uniqueVerses === 1 ? 'verse' : 'verses';
+              const readWord = block.totalVerseReads === 1 ? 'read' : 'reads';
+              const rereadLabel = block.rereadVerseCount === 1 ? '1 verse reread' : `${block.rereadVerseCount} verses reread`;
+              const detail = block.totalVerseReads === 0
                 ? 'No verses covered yet'
-                : `${chapter.uniqueVerses} of ${chapter.verseCount} ${verseWord} covered · ${chapter.totalVerseReads} total verse ${readWord}`;
+                : `${block.uniqueVerses} of ${block.verseCount} ${verseWord} covered · ${block.totalVerseReads} total verse ${readWord}`;
               return (
-                <Tooltip key={`${book.id}-${chapter.chapter}`}>
+                <Tooltip key={block.id}>
                   <TooltipTrigger
                     render={(
                       <span
-                        className={`coverage-cell coverage-level-${chapter.level}`}
+                        className={`coverage-cell coverage-level-${block.level}`}
                         role="img"
-                        tabIndex={chapter.totalVerseReads > 0 ? 0 : undefined}
-                        aria-label={`${book.name} ${chapter.chapter}: ${detail}`}
+                        tabIndex={block.totalVerseReads > 0 ? 0 : undefined}
+                        aria-label={`${block.rangeLabel}: ${detail}`}
                       />
                     )}
                   />
                   <TooltipContent className="coverage-tooltip">
-                    <span>{book.name} {chapter.chapter}</span>
-                    <strong>{chapter.uniqueVerses} of {chapter.verseCount} verses covered</strong>
-                    <small>{chapter.totalVerseReads} total verse {readWord}</small>
+                    <span>{block.rangeLabel}</span>
+                    <strong>{block.uniqueVerses} of {block.verseCount} verses covered</strong>
+                    <small>{block.totalVerseReads} total verse {readWord}{block.rereadVerseCount > 0 ? ` · ${rereadLabel}` : ''}</small>
                   </TooltipContent>
                 </Tooltip>
               );
