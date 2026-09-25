@@ -93,7 +93,7 @@ export default function TeamsPage() {
 
         <section className="your-teams" aria-labelledby="your-teams-title">
           <div className="section-heading">
-            <div><p className="eyebrow">Your circles</p><h2 id="your-teams-title">Your teams</h2></div>
+            <div><h2 id="your-teams-title">Your teams</h2></div>
             <span className="team-count">{teams.length} {teams.length === 1 ? 'team' : 'teams'}</span>
           </div>
 
