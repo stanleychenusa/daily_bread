@@ -294,8 +294,8 @@
 .reading-history-dialog [data-slot="dialog-header"] { padding-right: 2rem; }
 .reading-history-dialog [data-slot="dialog-title"] { color: #6c301a; font: 700 1.55rem/1 var(--font-caveat), cursive; }
 .reading-history-dialog [data-slot="dialog-description"] { color: #725e4e; font-size: .72rem; }
-.reading-history-list { display: grid; flex: 1 1 auto; gap: .8rem; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-right: .25rem; scrollbar-gutter: stable; }
-.reading-history-day { overflow: hidden; border: 1px solid #d4b48f; border-radius: .78rem; background: #fffdf7; }
+.reading-history-list { display: flex; flex: 1 1 auto; flex-direction: column; gap: .8rem; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-right: .25rem; scrollbar-gutter: stable; }
+.reading-history-day { flex: 0 0 auto; overflow: hidden; border: 1px solid #d4b48f; border-radius: .78rem; background: #fffdf7; }
 .reading-history-day > header { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .68rem .78rem; border-bottom: 1px solid #dfc7aa; background: #f6e7d1; }
 .reading-history-day h3 { margin: 0; color: #703319; font: 700 1.05rem/1 var(--font-caveat), cursive; }
 .reading-history-day > header > span { color: #9b4b17; font-size: .62rem; font-weight: 800; }
