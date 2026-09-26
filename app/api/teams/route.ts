@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { getSessionUser, jsonError } from '@/lib/server';
 
 type TeamRow = { id: string; name: string; joinCode: string };
-type TeamDetailRow = TeamRow & { description: string };
+type TeamDetailRow = TeamRow & { description: string; createdBy: string };
 type MemberRow = { teamId: string; id: string; firstName: string; lastName: string };
 type TeamDetailMemberRow = MemberRow & { joinedAt: number; totalVerseCount: number };
 type TeamJourneyRow = { userId: string; readingDate: string; verseCount: number };
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
 
     const team = await env.DB.prepare(
       `SELECT teams.id, teams.name, teams.join_code AS joinCode,
-              COALESCE(teams.description, '') AS description FROM teams
+              COALESCE(teams.description, '') AS description, teams.created_by AS createdBy FROM teams
        JOIN team_members ON team_members.team_id = teams.id
        WHERE teams.id = ? AND team_members.user_id = ?`,
     ).bind(teamId, user.id).first<TeamDetailRow>();
@@ -81,7 +81,14 @@ export async function GET(request: Request) {
     ]);
 
     return NextResponse.json({
-      team: { ...team, members: membersResult.results },
+      team: {
+        id: team.id,
+        name: team.name,
+        joinCode: team.joinCode,
+        description: team.description,
+        canDelete: team.createdBy === user.id,
+        members: membersResult.results,
+      },
       journey: journeyResult.results,
       activity: activityResult.results,
     });
@@ -177,4 +184,25 @@ export async function PATCH(request: Request) {
   }
 
   return jsonError('Choose a team detail to update.');
+}
+
+export async function DELETE(request: Request) {
+  const user = await getSessionUser(request);
+  if (!user) return jsonError('Please sign in.', 401);
+
+  const teamId = new URL(request.url).searchParams.get('teamId');
+  if (!teamId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(teamId)) {
+    return jsonError('Please choose a valid team.');
+  }
+
+  const ownedTeam = await env.DB.prepare(
+    'SELECT id FROM teams WHERE id = ? AND created_by = ?',
+  ).bind(teamId, user.id).first();
+  if (!ownedTeam) return jsonError('Only the person who created this team can delete it.', 403);
+
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM team_members WHERE team_id = ?').bind(teamId),
+    env.DB.prepare('DELETE FROM teams WHERE id = ? AND created_by = ?').bind(teamId, user.id),
+  ]);
+  return NextResponse.json({ ok: true });
 }

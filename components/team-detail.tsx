@@ -1,10 +1,21 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, BookOpen, CalendarDays, Check, Copy, Pencil, Users } from 'lucide-react';
+import { ArrowLeft, BookOpen, CalendarDays, Check, Copy, Pencil, Trash2, Users } from 'lucide-react';
 
 import { AppHeader } from '@/components/app-header';
 import { TeamJourney } from '@/components/team-journey';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,7 +25,7 @@ type TeamMember = { id: string; firstName: string; lastName: string; joinedAt: n
 type TeamActivity = { id: string; userId: string; readingDate: string; passage: string; verseCount: number };
 type TeamJourneyReading = { userId: string; readingDate: string; verseCount: number };
 type TeamDetailData = {
-  team: { id: string; name: string; joinCode: string; description: string; members: TeamMember[] };
+  team: { id: string; name: string; joinCode: string; description: string; canDelete: boolean; members: TeamMember[] };
   journey: TeamJourneyReading[];
   activity: TeamActivity[];
 };
@@ -38,6 +49,9 @@ export function TeamDetail({ teamId }: { teamId: string }) {
   const [descriptionSaving, setDescriptionSaving] = useState(false);
   const [descriptionError, setDescriptionError] = useState('');
   const [teamIdCopied, setTeamIdCopied] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     Promise.all([
@@ -126,6 +140,20 @@ export function TeamDetail({ teamId }: { teamId: string }) {
       window.setTimeout(() => setTeamIdCopied(false), 2200);
     } catch {
       setTeamIdCopied(false);
+    }
+  }
+
+  async function deleteTeam() {
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await readJson<{ ok: boolean }>(await fetch(`/api/teams?teamId=${encodeURIComponent(teamId)}`, {
+        method: 'DELETE',
+      }));
+      window.location.assign('/teams');
+    } catch (deleteRequestError) {
+      setDeleteError(deleteRequestError instanceof Error ? deleteRequestError.message : 'Could not delete this team.');
+      setDeleting(false);
     }
   }
 
@@ -356,7 +384,44 @@ export function TeamDetail({ teamId }: { teamId: string }) {
             })}
           </div>
         </section>
+
+        {data.team.canDelete && (
+          <section className="team-danger-zone" aria-labelledby="delete-team-title">
+            <div>
+              <h2 id="delete-team-title">Delete team</h2>
+              <p>Remove this team and its shared membership. Everyone’s personal reading history will stay intact.</p>
+            </div>
+            <Button type="button" variant="destructive" onClick={() => setDeleteOpen(true)}>
+              <Trash2 aria-hidden="true" /> Delete team
+            </Button>
+          </section>
+        )}
       </main>
+
+      <AlertDialog
+        open={deleteOpen}
+        onOpenChange={(open) => {
+          setDeleteOpen(open);
+          if (!open) setDeleteError('');
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia><Trash2 aria-hidden="true" /></AlertDialogMedia>
+            <AlertDialogTitle>Delete {data.team.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the team, its membership list, and its shared journey. Members’ personal readings and reflections will not be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteError && <p className="team-delete-error" role="alert">{deleteError}</p>}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Keep team</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" disabled={deleting} onClick={() => void deleteTeam()}>
+              {deleting ? 'Deleting…' : 'Yes, delete team'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

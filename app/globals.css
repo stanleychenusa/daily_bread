@@ -421,6 +421,11 @@
 .team-detail-error > svg { width: 2rem; color: #aa4b10; }
 .team-detail-error h1 { margin: .8rem 0 0; font: 700 1.8rem var(--font-caveat), cursive; }
 .team-detail-error p { margin: .4rem 0 1rem; font-size: .72rem; }
+.team-danger-zone { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.05rem; padding: 1rem 1.15rem; border: 1px solid rgb(168 70 54 / 32%); border-radius: .9rem; background: rgb(255 242 234 / 55%); }
+.team-danger-zone h2 { margin: 0; color: #8f392e; font: 700 1.12rem/1 var(--font-caveat), cursive; }
+.team-danger-zone p { max-width: 34rem; margin: .32rem 0 0; color: #76564b; font-size: .62rem; line-height: 1.45; }
+.team-danger-zone > button { flex: 0 0 auto; }
+.team-delete-error { margin: 0; color: #a23f32; font-size: .68rem; text-align: center; }
 
 /* Reflections */
 .reflections-panel { margin-top: 1.05rem; padding: 1.3rem; border: 1px solid rgb(255 255 255 / 76%); border-radius: 1.05rem; background: rgb(255 255 249 / 69%); box-shadow: 0 13px 30px rgb(83 55 31 / 15%), inset 0 0 0 1px rgb(139 94 51 / 11%); backdrop-filter: blur(18px) saturate(.82); }
@@ -487,6 +492,8 @@
   .team-journey-summary > div { padding-inline: .2rem; }
   .team-journey-summary strong { font-size: 1.05rem; }
   .team-journey-summary small { font-size: .52rem; }
+  .team-danger-zone { align-items: flex-start; flex-direction: column; }
+  .team-danger-zone > button { width: 100%; }
   .reflections-heading { grid-template-columns: auto 1fr; }
   .reflection-count { grid-column: 1 / -1; justify-self: start; margin-top: .55rem; }
   .reflection-card header { align-items: flex-start; flex-direction: column; }
