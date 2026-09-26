@@ -12,6 +12,7 @@ import { fetchCurrentUser, readJson, type User } from '@/lib/client';
 type Team = {
   id: string;
   name: string;
+  joinCode: string;
   members: { id: string; firstName: string; lastName: string }[];
 };
 
@@ -19,7 +20,7 @@ export default function TeamsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [createName, setCreateName] = useState('');
-  const [joinId, setJoinId] = useState('');
+  const [joinCode, setJoinCode] = useState('');
   const [busy, setBusy] = useState<'create' | 'join' | null>(null);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<{ message: string; tone: 'success' | 'error' } | null>(null);
@@ -46,19 +47,19 @@ export default function TeamsPage() {
     event.preventDefault();
     setBusy(action);
     try {
-      const result = await readJson<{ ok: boolean; team: { id: string; name: string } }>(await fetch('/api/teams', {
+      const result = await readJson<{ ok: boolean; team: { id: string; name: string; joinCode: string } }>(await fetch('/api/teams', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(action === 'create'
           ? { action, name: createName }
-          : { action, teamId: joinId }),
+          : { action, teamId: joinCode }),
       }));
       if (action === 'create') {
         setCreateName('');
         window.location.assign(`/teams/${result.team.id}`);
         return;
       }
-      setJoinId('');
+      setJoinCode('');
       await loadTeams();
       setStatus({ message: `You joined ${result.team.name}.`, tone: 'success' });
     } catch (error) {
@@ -93,11 +94,12 @@ export default function TeamsPage() {
             <label>
               Team ID
               <Input
-                value={joinId}
+                value={joinCode}
+                maxLength={6}
                 autoComplete="off"
                 spellCheck={false}
-                onChange={(event) => setJoinId(event.target.value)}
-                placeholder="Enter the Team ID"
+                onChange={(event) => setJoinCode(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
+                placeholder="e.g., A1B2C3"
                 required
               />
             </label>
@@ -130,6 +132,7 @@ export default function TeamsPage() {
                   <span className="team-info">
                     <strong>{team.name}</strong>
                     <small>{team.members.length} {team.members.length === 1 ? 'member' : 'members'}</small>
+                    <code className="team-list-id">Team ID {team.joinCode}</code>
                   </span>
                   <span className="member-names">{team.members.map((member) => `${member.firstName} ${member.lastName}`).join(', ')}</span>
                   <ChevronRight aria-hidden="true" />

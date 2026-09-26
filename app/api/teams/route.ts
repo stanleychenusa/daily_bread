@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 import { getSessionUser, jsonError } from '@/lib/server';
 
-type TeamRow = { id: string; name: string };
+type TeamRow = { id: string; name: string; joinCode: string };
 type TeamDetailRow = TeamRow & { description: string };
 type MemberRow = { teamId: string; id: string; firstName: string; lastName: string };
 type TeamDetailMemberRow = MemberRow & { joinedAt: number; totalVerseCount: number };
@@ -17,6 +17,15 @@ function dateDaysAgo(days: number) {
   return date.toISOString().slice(0, 10);
 }
 
+async function createTeamJoinCode() {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const joinCode = crypto.randomUUID().replaceAll('-', '').slice(0, 6).toUpperCase();
+    const existing = await env.DB.prepare('SELECT 1 FROM teams WHERE join_code = ?').bind(joinCode).first();
+    if (!existing) return joinCode;
+  }
+  throw new Error('Could not create a unique Team ID.');
+}
+
 export async function GET(request: Request) {
   const user = await getSessionUser(request);
   if (!user) return jsonError('Please sign in.', 401);
@@ -28,7 +37,8 @@ export async function GET(request: Request) {
     }
 
     const team = await env.DB.prepare(
-      `SELECT teams.id, teams.name, COALESCE(teams.description, '') AS description FROM teams
+      `SELECT teams.id, teams.name, teams.join_code AS joinCode,
+              COALESCE(teams.description, '') AS description FROM teams
        JOIN team_members ON team_members.team_id = teams.id
        WHERE teams.id = ? AND team_members.user_id = ?`,
     ).bind(teamId, user.id).first<TeamDetailRow>();
@@ -78,7 +88,7 @@ export async function GET(request: Request) {
   }
 
   const teamsResult = await env.DB.prepare(
-    `SELECT teams.id, teams.name FROM teams
+    `SELECT teams.id, teams.name, teams.join_code AS joinCode FROM teams
      JOIN team_members ON team_members.team_id = teams.id
      WHERE team_members.user_id = ? ORDER BY teams.created_at DESC`,
   ).bind(user.id).all<TeamRow>();
@@ -109,21 +119,25 @@ export async function POST(request: Request) {
     const name = body.name.trim().replace(/\s+/g, ' ');
     if (name.length < 2 || name.length > 60) return jsonError('Team names should be 2–60 characters.');
     const teamId = crypto.randomUUID();
+    const joinCode = await createTeamJoinCode();
     const now = Date.now();
     await env.DB.batch([
-      env.DB.prepare('INSERT INTO teams (id, name, created_by, created_at) VALUES (?, ?, ?, ?)').bind(teamId, name, user.id, now),
+      env.DB.prepare('INSERT INTO teams (id, name, join_code, created_by, created_at) VALUES (?, ?, ?, ?, ?)')
+        .bind(teamId, name, joinCode, user.id, now),
       env.DB.prepare('INSERT INTO team_members (team_id, user_id, joined_at) VALUES (?, ?, ?)').bind(teamId, user.id, now),
     ]);
-    return NextResponse.json({ ok: true, team: { id: teamId, name } }, { status: 201 });
+    return NextResponse.json({ ok: true, team: { id: teamId, name, joinCode } }, { status: 201 });
   }
 
   if (body.action === 'join') {
     if (typeof body.teamId !== 'string') return jsonError('Please enter a Team ID.');
-    const teamId = body.teamId.trim().toLowerCase();
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(teamId)) {
+    const joinCode = body.teamId.trim().toUpperCase();
+    if (!/^[A-Z0-9]{6}$/.test(joinCode)) {
       return jsonError('Please enter a valid Team ID.');
     }
-    const team = await env.DB.prepare('SELECT id, name FROM teams WHERE id = ?').bind(teamId).first<TeamRow>();
+    const team = await env.DB.prepare(
+      'SELECT id, name, join_code AS joinCode FROM teams WHERE join_code = ?',
+    ).bind(joinCode).first<TeamRow>();
     if (!team) return jsonError('We couldn’t find a team with that ID.', 404);
     await env.DB.prepare('INSERT OR IGNORE INTO team_members (team_id, user_id, joined_at) VALUES (?, ?, ?)')
       .bind(team.id, user.id, Date.now()).run();

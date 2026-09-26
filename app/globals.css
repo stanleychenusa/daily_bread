@@ -359,6 +359,7 @@
 .team-info strong, .team-info small { display: block; }
 .team-info strong { font: 700 1.08rem var(--font-caveat), cursive; }
 .team-info small { margin-top: .12rem; color: #856e5c; font-size: .6rem; }
+.team-list-id { display: inline-block; margin-top: .28rem; padding: .18rem .35rem; border: 1px solid #d2b28c; border-radius: .35rem; color: #70462c; background: rgb(255 252 244 / 48%); font: 800 .54rem/1.1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; }
 .member-names { overflow: hidden; color: #685548; font-size: .68rem; text-overflow: ellipsis; white-space: nowrap; }
 .team-row > svg { width: .9rem; color: #9b7759; }
 

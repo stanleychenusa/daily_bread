@@ -14,7 +14,7 @@ type TeamMember = { id: string; firstName: string; lastName: string; joinedAt: n
 type TeamActivity = { id: string; userId: string; readingDate: string; passage: string; verseCount: number };
 type TeamJourneyReading = { userId: string; readingDate: string; verseCount: number };
 type TeamDetailData = {
-  team: { id: string; name: string; description: string; members: TeamMember[] };
+  team: { id: string; name: string; joinCode: string; description: string; members: TeamMember[] };
   journey: TeamJourneyReading[];
   activity: TeamActivity[];
 };
@@ -121,7 +121,7 @@ export function TeamDetail({ teamId }: { teamId: string }) {
 
   async function copyTeamId() {
     try {
-      await navigator.clipboard.writeText(teamId);
+      await navigator.clipboard.writeText(data?.team.joinCode ?? '');
       setTeamIdCopied(true);
       window.setTimeout(() => setTeamIdCopied(false), 2200);
     } catch {
@@ -277,7 +277,7 @@ export function TeamDetail({ teamId }: { teamId: string }) {
             )}
             <div className="team-id-row">
               <span>Team ID</span>
-              <code>{data.team.id}</code>
+              <code>{data.team.joinCode}</code>
               <Button type="button" variant="outline" size="sm" onClick={copyTeamId}>
                 {teamIdCopied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
                 {teamIdCopied ? 'Copied' : 'Copy'}
