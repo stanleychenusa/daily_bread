@@ -25,7 +25,7 @@ type TeamMember = { id: string; firstName: string; lastName: string; joinedAt: n
 type TeamActivity = { id: string; userId: string; readingDate: string; passage: string; verseCount: number };
 type TeamJourneyReading = { userId: string; readingDate: string; verseCount: number };
 type TeamDetailData = {
-  team: { id: string; name: string; joinCode: string; description: string; canDelete: boolean; members: TeamMember[] };
+  team: { id: string; name: string; joinCode: string; description: string; ownerId: string; canDelete: boolean; members: TeamMember[] };
   journey: TeamJourneyReading[];
   activity: TeamActivity[];
 };
@@ -90,6 +90,8 @@ export function TeamDetail({ teamId }: { teamId: string }) {
     }
     return leader && leader.totalVerseCount > 0 ? leader : null;
   }, [data]);
+
+  const teamOwner = data?.team.members.find((member) => member.id === data.team.ownerId) ?? null;
 
   async function saveName() {
     setNameSaving(true);
@@ -236,6 +238,11 @@ export function TeamDetail({ teamId }: { teamId: string }) {
             ) : (
               <div className="team-name-display">
                 <h1>{data.team.name}</h1>
+                {teamOwner && (
+                  <span className="team-owner-badge">
+                    Owner: {teamOwner.firstName} {teamOwner.lastName}
+                  </span>
+                )}
                 <Button
                   type="button"
                   variant="ghost"

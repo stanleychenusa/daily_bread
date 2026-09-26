@@ -86,6 +86,7 @@ export async function GET(request: Request) {
         name: team.name,
         joinCode: team.joinCode,
         description: team.description,
+        ownerId: team.createdBy,
         canDelete: team.createdBy === user.id,
         members: membersResult.results,
       },
