@@ -452,11 +452,7 @@ export function TeamDetail({ teamId }: { teamId: string }) {
         <section className="team-leave-zone" aria-labelledby="leave-team-title">
           <div>
             <h2 id="leave-team-title">Leave team</h2>
-            <p>
-              {data.team.isOwner
-                ? 'Pass ownership to another member, then leave this team.'
-                : 'Leave this team without affecting your personal reading history or reflections.'}
-            </p>
+            {data.team.isOwner && <p>Pass ownership to another member, then leave this team.</p>}
           </div>
           <Button type="button" variant="outline" onClick={openLeaveDialog}>
             <LogOut aria-hidden="true" /> Leave team
