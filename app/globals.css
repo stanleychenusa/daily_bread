@@ -429,6 +429,13 @@
 .team-danger-zone h2 { margin: 0; color: #8f392e; font: 700 1.12rem/1 var(--font-caveat), cursive; }
 .team-danger-zone p { max-width: 34rem; margin: .32rem 0 0; color: #76564b; font-size: .62rem; line-height: 1.45; }
 .team-danger-zone > button { flex: 0 0 auto; }
+.team-leave-zone { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.05rem; padding: 1rem 1.15rem; border: 1px solid #d1b088; border-radius: .9rem; background: rgb(255 250 238 / 58%); }
+.team-leave-zone h2 { margin: 0; color: #713f24; font: 700 1.12rem/1 var(--font-caveat), cursive; }
+.team-leave-zone p { max-width: 34rem; margin: .32rem 0 0; color: #765b48; font-size: .62rem; line-height: 1.45; }
+.team-leave-zone > button { flex: 0 0 auto; }
+.team-transfer-field { display: grid; gap: .35rem; }
+.team-transfer-field label { color: #604738; font-size: .62rem; font-weight: 800; }
+.team-owner-select { width: 100%; }
 .team-delete-error { margin: 0; color: #a23f32; font-size: .68rem; text-align: center; }
 
 /* Reflections */
@@ -496,8 +503,8 @@
   .team-journey-summary > div { padding-inline: .2rem; }
   .team-journey-summary strong { font-size: 1.05rem; }
   .team-journey-summary small { font-size: .52rem; }
-  .team-danger-zone { align-items: flex-start; flex-direction: column; }
-  .team-danger-zone > button { width: 100%; }
+  .team-danger-zone, .team-leave-zone { align-items: flex-start; flex-direction: column; }
+  .team-danger-zone > button, .team-leave-zone > button { width: 100%; }
   .reflections-heading { grid-template-columns: auto 1fr; }
   .reflection-count { grid-column: 1 / -1; justify-self: start; margin-top: .55rem; }
   .reflection-card header { align-items: flex-start; flex-direction: column; }

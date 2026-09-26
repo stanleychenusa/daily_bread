@@ -5,6 +5,7 @@ import { getSessionUser, jsonError } from '@/lib/server';
 
 type TeamRow = { id: string; name: string; joinCode: string };
 type TeamDetailRow = TeamRow & { description: string; createdBy: string };
+type TeamOwnerRow = { createdBy: string };
 type MemberRow = { teamId: string; id: string; firstName: string; lastName: string };
 type TeamDetailMemberRow = MemberRow & { joinedAt: number; totalVerseCount: number };
 type TeamJourneyRow = { userId: string; readingDate: string; verseCount: number };
@@ -120,7 +121,12 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const user = await getSessionUser(request);
   if (!user) return jsonError('Please sign in.', 401);
-  const body = await request.json<{ action?: 'create' | 'join'; name?: unknown; teamId?: unknown }>();
+  const body = await request.json<{
+    action?: 'create' | 'join' | 'leave';
+    name?: unknown;
+    teamId?: unknown;
+    newOwnerId?: unknown;
+  }>();
 
   if (body.action === 'create') {
     if (typeof body.name !== 'string') return jsonError('Please enter a team name.');
@@ -152,7 +158,44 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, team });
   }
 
-  return jsonError('Choose whether to create or join a team.');
+  if (body.action === 'leave') {
+    if (typeof body.teamId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.teamId)) {
+      return jsonError('Please choose a valid team.');
+    }
+
+    const team = await env.DB.prepare(
+      `SELECT teams.created_by AS createdBy FROM teams
+       JOIN team_members ON team_members.team_id = teams.id
+       WHERE teams.id = ? AND team_members.user_id = ?`,
+    ).bind(body.teamId, user.id).first<TeamOwnerRow>();
+    if (!team) return jsonError('You are no longer a member of this team.', 404);
+
+    if (team.createdBy === user.id) {
+      if (typeof body.newOwnerId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.newOwnerId)) {
+        return jsonError('Choose another member to become the team owner.');
+      }
+      if (body.newOwnerId === user.id) return jsonError('Choose another member to become the team owner.');
+
+      const successor = await env.DB.prepare(
+        'SELECT 1 FROM team_members WHERE team_id = ? AND user_id = ?',
+      ).bind(body.teamId, body.newOwnerId).first();
+      if (!successor) return jsonError('The selected new owner is no longer a member of this team.', 404);
+
+      await env.DB.batch([
+        env.DB.prepare('UPDATE teams SET created_by = ? WHERE id = ? AND created_by = ?')
+          .bind(body.newOwnerId, body.teamId, user.id),
+        env.DB.prepare('DELETE FROM team_members WHERE team_id = ? AND user_id = ?')
+          .bind(body.teamId, user.id),
+      ]);
+      return NextResponse.json({ ok: true, newOwnerId: body.newOwnerId });
+    }
+
+    await env.DB.prepare('DELETE FROM team_members WHERE team_id = ? AND user_id = ?')
+      .bind(body.teamId, user.id).run();
+    return NextResponse.json({ ok: true, newOwnerId: null });
+  }
+
+  return jsonError('Choose whether to create, join, or leave a team.');
 }
 
 export async function PATCH(request: Request) {

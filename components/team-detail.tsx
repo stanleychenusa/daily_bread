@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, BookOpen, CalendarDays, Pencil, Trash2, UserMinus, Users } from 'lucide-react';
+import { ArrowLeft, BookOpen, CalendarDays, LogOut, Pencil, Trash2, UserMinus, Users } from 'lucide-react';
 
 import { AppHeader } from '@/components/app-header';
 import { TeamJourney } from '@/components/team-journey';
@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Textarea } from '@/components/ui/textarea';
 import { fetchCurrentUser, readJson, type User } from '@/lib/client';
 
@@ -54,6 +55,10 @@ export function TeamDetail({ teamId }: { teamId: string }) {
   const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null);
   const [removingMember, setRemovingMember] = useState(false);
   const [removeMemberError, setRemoveMemberError] = useState('');
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const [newOwnerId, setNewOwnerId] = useState('');
+  const [leaving, setLeaving] = useState(false);
+  const [leaveError, setLeaveError] = useState('');
 
   useEffect(() => {
     Promise.all([
@@ -170,6 +175,33 @@ export function TeamDetail({ teamId }: { teamId: string }) {
       setRemoveMemberError(removeError instanceof Error ? removeError.message : 'Could not remove this member.');
     } finally {
       setRemovingMember(false);
+    }
+  }
+
+  function openLeaveDialog() {
+    const firstSuccessor = data?.team.members.find((member) => member.id !== data.team.ownerId);
+    setNewOwnerId(data?.team.isOwner ? firstSuccessor?.id ?? '' : '');
+    setLeaveError('');
+    setLeaveOpen(true);
+  }
+
+  async function leaveTeam() {
+    setLeaving(true);
+    setLeaveError('');
+    try {
+      await readJson<{ ok: boolean; newOwnerId: string | null }>(await fetch('/api/teams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'leave',
+          teamId,
+          newOwnerId: data?.team.isOwner ? newOwnerId : undefined,
+        }),
+      }));
+      window.location.assign('/teams');
+    } catch (leaveRequestError) {
+      setLeaveError(leaveRequestError instanceof Error ? leaveRequestError.message : 'Could not leave this team.');
+      setLeaving(false);
     }
   }
 
@@ -417,6 +449,20 @@ export function TeamDetail({ teamId }: { teamId: string }) {
           </div>
         </section>
 
+        <section className="team-leave-zone" aria-labelledby="leave-team-title">
+          <div>
+            <h2 id="leave-team-title">Leave team</h2>
+            <p>
+              {data.team.isOwner
+                ? 'Pass ownership to another member, then leave this team.'
+                : 'Leave this team without affecting your personal reading history or reflections.'}
+            </p>
+          </div>
+          <Button type="button" variant="outline" onClick={openLeaveDialog}>
+            <LogOut aria-hidden="true" /> Leave team
+          </Button>
+        </section>
+
         {data.team.isOwner && (
           <section className="team-danger-zone" aria-labelledby="delete-team-title">
             <div>
@@ -450,6 +496,61 @@ export function TeamDetail({ teamId }: { teamId: string }) {
             <AlertDialogCancel disabled={deleting}>Keep team</AlertDialogCancel>
             <AlertDialogAction variant="destructive" disabled={deleting} onClick={() => void deleteTeam()}>
               {deleting ? 'Deleting…' : 'Yes, delete team'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={leaveOpen}
+        onOpenChange={(open) => {
+          if (!leaving) setLeaveOpen(open);
+          if (!open && !leaving) setLeaveError('');
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia><LogOut aria-hidden="true" /></AlertDialogMedia>
+            <AlertDialogTitle>Leave {data.team.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {data.team.isOwner
+                ? data.team.members.length > 1
+                  ? 'Choose who will become the new owner. Once you leave, you will no longer be able to manage or view this team.'
+                  : 'You are the only member. Another member must join before you can transfer ownership and leave. You can delete the team instead.'
+                : 'You will lose access to this team and its shared journey. Your personal readings and reflections will stay intact.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {data.team.isOwner && data.team.members.length > 1 && (
+            <div className="team-transfer-field">
+              <label htmlFor="new-team-owner">New team owner</label>
+              <NativeSelect
+                id="new-team-owner"
+                className="team-owner-select"
+                value={newOwnerId}
+                onChange={(event) => setNewOwnerId(event.target.value)}
+                disabled={leaving}
+              >
+                {data.team.members
+                  .filter((member) => member.id !== data.team.ownerId)
+                  .map((member) => (
+                    <NativeSelectOption key={member.id} value={member.id}>
+                      {member.firstName} {member.lastName}
+                    </NativeSelectOption>
+                  ))}
+              </NativeSelect>
+            </div>
+          )}
+
+          {leaveError && <p className="team-delete-error" role="alert">{leaveError}</p>}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={leaving}>Stay in team</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={leaving || (data.team.isOwner && !newOwnerId)}
+              onClick={() => void leaveTeam()}
+            >
+              {leaving ? 'Leaving…' : data.team.isOwner ? 'Transfer and leave' : 'Yes, leave team'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
