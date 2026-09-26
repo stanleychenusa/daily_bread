@@ -37,7 +37,7 @@ export const teams = sqliteTable('teams', {
   description: text('description').notNull().default(''),
   createdBy: text('created_by').notNull().references(() => users.id),
   createdAt: integer('created_at').notNull(),
-}, (table) => [uniqueIndex('idx_teams_name').on(table.name)]);
+});
 
 export const teamMembers = sqliteTable('team_members', {
   teamId: text('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),

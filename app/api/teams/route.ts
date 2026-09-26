@@ -102,28 +102,32 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const user = await getSessionUser(request);
   if (!user) return jsonError('Please sign in.', 401);
-  const body = await request.json<{ action?: 'create' | 'join'; name?: string }>();
-  const name = body.name?.trim().replace(/\s+/g, ' ') ?? '';
-  if (name.length < 2 || name.length > 60) return jsonError('Team names should be 2–60 characters.');
+  const body = await request.json<{ action?: 'create' | 'join'; name?: unknown; teamId?: unknown }>();
 
   if (body.action === 'create') {
-    const existing = await env.DB.prepare('SELECT id FROM teams WHERE name = ? COLLATE NOCASE').bind(name).first();
-    if (existing) return jsonError('A team with that name already exists.', 409);
+    if (typeof body.name !== 'string') return jsonError('Please enter a team name.');
+    const name = body.name.trim().replace(/\s+/g, ' ');
+    if (name.length < 2 || name.length > 60) return jsonError('Team names should be 2–60 characters.');
     const teamId = crypto.randomUUID();
     const now = Date.now();
     await env.DB.batch([
       env.DB.prepare('INSERT INTO teams (id, name, created_by, created_at) VALUES (?, ?, ?, ?)').bind(teamId, name, user.id, now),
       env.DB.prepare('INSERT INTO team_members (team_id, user_id, joined_at) VALUES (?, ?, ?)').bind(teamId, user.id, now),
     ]);
-    return NextResponse.json({ ok: true }, { status: 201 });
+    return NextResponse.json({ ok: true, team: { id: teamId, name } }, { status: 201 });
   }
 
   if (body.action === 'join') {
-    const team = await env.DB.prepare('SELECT id FROM teams WHERE name = ? COLLATE NOCASE').bind(name).first<{ id: string }>();
-    if (!team) return jsonError('We couldn’t find a team with that name.', 404);
+    if (typeof body.teamId !== 'string') return jsonError('Please enter a Team ID.');
+    const teamId = body.teamId.trim().toLowerCase();
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(teamId)) {
+      return jsonError('Please enter a valid Team ID.');
+    }
+    const team = await env.DB.prepare('SELECT id, name FROM teams WHERE id = ?').bind(teamId).first<TeamRow>();
+    if (!team) return jsonError('We couldn’t find a team with that ID.', 404);
     await env.DB.prepare('INSERT OR IGNORE INTO team_members (team_id, user_id, joined_at) VALUES (?, ?, ?)')
       .bind(team.id, user.id, Date.now()).run();
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, team });
   }
 
   return jsonError('Choose whether to create or join a team.');
@@ -133,20 +137,30 @@ export async function PATCH(request: Request) {
   const user = await getSessionUser(request);
   if (!user) return jsonError('Please sign in.', 401);
 
-  const body = await request.json<{ teamId?: unknown; description?: unknown }>();
+  const body = await request.json<{ teamId?: unknown; name?: unknown; description?: unknown }>();
   if (typeof body.teamId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.teamId)) {
     return jsonError('Please choose a valid team.');
   }
-  if (typeof body.description !== 'string') return jsonError('Please enter a valid team description.');
-
-  const description = body.description.trim();
-  if (description.length > 280) return jsonError('Team descriptions can be up to 280 characters.');
-
   const membership = await env.DB.prepare(
     'SELECT 1 FROM team_members WHERE team_id = ? AND user_id = ?',
   ).bind(body.teamId, user.id).first();
   if (!membership) return jsonError('We couldn’t find that team, or you no longer have access to it.', 404);
 
-  await env.DB.prepare('UPDATE teams SET description = ? WHERE id = ?').bind(description, body.teamId).run();
-  return NextResponse.json({ description });
+  if (body.name !== undefined) {
+    if (typeof body.name !== 'string') return jsonError('Please enter a valid team name.');
+    const name = body.name.trim().replace(/\s+/g, ' ');
+    if (name.length < 2 || name.length > 60) return jsonError('Team names should be 2–60 characters.');
+    await env.DB.prepare('UPDATE teams SET name = ? WHERE id = ?').bind(name, body.teamId).run();
+    return NextResponse.json({ name });
+  }
+
+  if (body.description !== undefined) {
+    if (typeof body.description !== 'string') return jsonError('Please enter a valid team description.');
+    const description = body.description.trim();
+    if (description.length > 280) return jsonError('Team descriptions can be up to 280 characters.');
+    await env.DB.prepare('UPDATE teams SET description = ? WHERE id = ?').bind(description, body.teamId).run();
+    return NextResponse.json({ description });
+  }
+
+  return jsonError('Choose a team detail to update.');
 }

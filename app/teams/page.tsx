@@ -19,7 +19,7 @@ export default function TeamsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [createName, setCreateName] = useState('');
-  const [joinName, setJoinName] = useState('');
+  const [joinId, setJoinId] = useState('');
   const [busy, setBusy] = useState<'create' | 'join' | null>(null);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<{ message: string; tone: 'success' | 'error' } | null>(null);
@@ -44,17 +44,23 @@ export default function TeamsPage() {
 
   async function submitTeam(event: FormEvent<HTMLFormElement>, action: 'create' | 'join') {
     event.preventDefault();
-    const name = action === 'create' ? createName : joinName;
     setBusy(action);
     try {
-      await readJson<{ ok: boolean }>(await fetch('/api/teams', {
+      const result = await readJson<{ ok: boolean; team: { id: string; name: string } }>(await fetch('/api/teams', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, name }),
+        body: JSON.stringify(action === 'create'
+          ? { action, name: createName }
+          : { action, teamId: joinId }),
       }));
+      if (action === 'create') {
+        setCreateName('');
+        window.location.assign(`/teams/${result.team.id}`);
+        return;
+      }
+      setJoinId('');
       await loadTeams();
-      if (action === 'create') setCreateName(''); else setJoinName('');
-      setStatus({ message: action === 'create' ? `${name} is ready for your group.` : `You joined ${name}.`, tone: 'success' });
+      setStatus({ message: `You joined ${result.team.name}.`, tone: 'success' });
     } catch (error) {
       setStatus({ message: error instanceof Error ? error.message : 'Could not update your teams.', tone: 'error' });
     } finally {
@@ -84,7 +90,17 @@ export default function TeamsPage() {
           <form className="team-action-card join-team" onSubmit={(event) => submitTeam(event, 'join')}>
             <span className="team-action-icon"><Search aria-hidden="true" /></span>
             <h2>Join a team</h2>
-            <label>Team name<Input value={joinName} onChange={(event) => setJoinName(event.target.value)} placeholder="Enter team name to join" required /></label>
+            <label>
+              Team ID
+              <Input
+                value={joinId}
+                autoComplete="off"
+                spellCheck={false}
+                onChange={(event) => setJoinId(event.target.value)}
+                placeholder="Enter the Team ID"
+                required
+              />
+            </label>
             <Button type="submit" size="lg" variant="secondary" disabled={busy !== null}>{busy === 'join' ? 'Joining…' : 'Join team'}<ChevronRight /></Button>
           </form>
         </section>

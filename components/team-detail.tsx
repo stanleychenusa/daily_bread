@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, BookOpen, CalendarDays, Pencil, Users } from 'lucide-react';
+import { ArrowLeft, BookOpen, CalendarDays, Check, Copy, Pencil, Users } from 'lucide-react';
 
 import { AppHeader } from '@/components/app-header';
 import { TeamJourney } from '@/components/team-journey';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { fetchCurrentUser, readJson, type User } from '@/lib/client';
 
@@ -28,10 +29,15 @@ export function TeamDetail({ teamId }: { teamId: string }) {
   const [data, setData] = useState<TeamDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+  const [nameSaving, setNameSaving] = useState(false);
+  const [nameError, setNameError] = useState('');
   const [editingDescription, setEditingDescription] = useState(false);
   const [descriptionDraft, setDescriptionDraft] = useState('');
   const [descriptionSaving, setDescriptionSaving] = useState(false);
   const [descriptionError, setDescriptionError] = useState('');
+  const [teamIdCopied, setTeamIdCopied] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -42,6 +48,7 @@ export function TeamDetail({ teamId }: { teamId: string }) {
       .then(([currentUser, teamData]) => {
         setUser(currentUser);
         setData(teamData);
+        setNameDraft(teamData.team.name);
         setDescriptionDraft(teamData.team.description);
       })
       .catch((loadError: Error) => setError(loadError.message))
@@ -70,6 +77,27 @@ export function TeamDetail({ teamId }: { teamId: string }) {
     return leader && leader.totalVerseCount > 0 ? leader : null;
   }, [data]);
 
+  async function saveName() {
+    setNameSaving(true);
+    setNameError('');
+    try {
+      const result = await readJson<{ name: string }>(await fetch('/api/teams', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId, name: nameDraft }),
+      }));
+      setData((current) => current
+        ? { ...current, team: { ...current.team, name: result.name } }
+        : current);
+      setNameDraft(result.name);
+      setEditingName(false);
+    } catch (saveError) {
+      setNameError(saveError instanceof Error ? saveError.message : 'Could not save the team name.');
+    } finally {
+      setNameSaving(false);
+    }
+  }
+
   async function saveDescription() {
     setDescriptionSaving(true);
     setDescriptionError('');
@@ -88,6 +116,16 @@ export function TeamDetail({ teamId }: { teamId: string }) {
       setDescriptionError(saveError instanceof Error ? saveError.message : 'Could not save the team description.');
     } finally {
       setDescriptionSaving(false);
+    }
+  }
+
+  async function copyTeamId() {
+    try {
+      await navigator.clipboard.writeText(teamId);
+      setTeamIdCopied(true);
+      window.setTimeout(() => setTeamIdCopied(false), 2200);
+    } catch {
+      setTeamIdCopied(false);
     }
   }
 
@@ -130,7 +168,62 @@ export function TeamDetail({ teamId }: { teamId: string }) {
             <ArrowLeft aria-hidden="true" /> Back to teams
           </button>
           <div>
-            <h1>{data.team.name}</h1>
+            {editingName ? (
+              <div className="team-name-editor">
+                <label htmlFor="team-name">Team name</label>
+                <div>
+                  <Input
+                    id="team-name"
+                    value={nameDraft}
+                    maxLength={60}
+                    onChange={(event) => setNameDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') void saveName();
+                      if (event.key === 'Escape') {
+                        setNameDraft(data.team.name);
+                        setNameError('');
+                        setEditingName(false);
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={nameSaving}
+                    onClick={() => {
+                      setNameDraft(data.team.name);
+                      setNameError('');
+                      setEditingName(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="button" size="sm" disabled={nameSaving} onClick={saveName}>
+                    {nameSaving ? 'Saving…' : 'Save'}
+                  </Button>
+                </div>
+                {nameError && <p className="team-description-error" role="alert">{nameError}</p>}
+              </div>
+            ) : (
+              <div className="team-name-display">
+                <h1>{data.team.name}</h1>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Edit team name"
+                  onClick={() => {
+                    setNameDraft(data.team.name);
+                    setNameError('');
+                    setEditingDescription(false);
+                    setEditingName(true);
+                  }}
+                >
+                  <Pencil aria-hidden="true" /> Edit
+                </Button>
+              </div>
+            )}
             {editingDescription ? (
               <div className="team-description-editor">
                 <label htmlFor="team-description">Team description</label>
@@ -174,6 +267,7 @@ export function TeamDetail({ teamId }: { teamId: string }) {
                   onClick={() => {
                     setDescriptionDraft(data.team.description);
                     setDescriptionError('');
+                    setEditingName(false);
                     setEditingDescription(true);
                   }}
                 >
@@ -181,6 +275,14 @@ export function TeamDetail({ teamId }: { teamId: string }) {
                 </Button>
               </div>
             )}
+            <div className="team-id-row">
+              <span>Team ID</span>
+              <code>{data.team.id}</code>
+              <Button type="button" variant="outline" size="sm" onClick={copyTeamId}>
+                {teamIdCopied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+                {teamIdCopied ? 'Copied' : 'Copy'}
+              </Button>
+            </div>
           </div>
         </div>
 
