@@ -116,7 +116,7 @@ export function TeamDetail({ teamId }: { teamId: string }) {
           <div className="team-journey-summary" aria-label="Team reading summary for the last year">
             <div><strong>{data.team.members.length}</strong><small>Members</small></div>
             <div><strong>{teamTotals.totalVerses.toLocaleString()}</strong><small>Verses Together</small></div>
-            <div><strong>{teamTotals.activeDays}</strong><small>Active Days</small></div>
+            <div><strong>{teamTotals.activeDays}</strong><small>Total Active Days</small></div>
           </div>
 
           <TeamJourney members={data.team.members} readings={data.journey} />
