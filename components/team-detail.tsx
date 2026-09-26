@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, BookOpen, CalendarDays, Check, Copy, Pencil, Trash2, Users } from 'lucide-react';
+import { ArrowLeft, BookOpen, CalendarDays, Pencil, Trash2, Users } from 'lucide-react';
 
 import { AppHeader } from '@/components/app-header';
 import { TeamJourney } from '@/components/team-journey';
@@ -48,7 +48,6 @@ export function TeamDetail({ teamId }: { teamId: string }) {
   const [descriptionDraft, setDescriptionDraft] = useState('');
   const [descriptionSaving, setDescriptionSaving] = useState(false);
   const [descriptionError, setDescriptionError] = useState('');
-  const [teamIdCopied, setTeamIdCopied] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -132,16 +131,6 @@ export function TeamDetail({ teamId }: { teamId: string }) {
       setDescriptionError(saveError instanceof Error ? saveError.message : 'Could not save the team description.');
     } finally {
       setDescriptionSaving(false);
-    }
-  }
-
-  async function copyTeamId() {
-    try {
-      await navigator.clipboard.writeText(data?.team.joinCode ?? '');
-      setTeamIdCopied(true);
-      window.setTimeout(() => setTeamIdCopied(false), 2200);
-    } catch {
-      setTeamIdCopied(false);
     }
   }
 
@@ -313,10 +302,6 @@ export function TeamDetail({ teamId }: { teamId: string }) {
             <div className="team-id-row">
               <span>Team ID</span>
               <code>{data.team.joinCode}</code>
-              <Button type="button" variant="outline" size="sm" onClick={copyTeamId}>
-                {teamIdCopied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-                {teamIdCopied ? 'Copied' : 'Copy'}
-              </Button>
             </div>
           </div>
         </div>
