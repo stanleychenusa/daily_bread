@@ -1,18 +1,19 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, BookOpen, CalendarDays, Users } from 'lucide-react';
+import { ArrowLeft, BookOpen, CalendarDays, Pencil, Users } from 'lucide-react';
 
 import { AppHeader } from '@/components/app-header';
 import { TeamJourney } from '@/components/team-journey';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { fetchCurrentUser, readJson, type User } from '@/lib/client';
 
 type TeamMember = { id: string; firstName: string; lastName: string; joinedAt: number; totalVerseCount: number };
 type TeamActivity = { id: string; userId: string; readingDate: string; passage: string; verseCount: number };
 type TeamJourneyReading = { userId: string; readingDate: string; verseCount: number };
 type TeamDetailData = {
-  team: { id: string; name: string; members: TeamMember[] };
+  team: { id: string; name: string; description: string; members: TeamMember[] };
   journey: TeamJourneyReading[];
   activity: TeamActivity[];
 };
@@ -27,6 +28,10 @@ export function TeamDetail({ teamId }: { teamId: string }) {
   const [data, setData] = useState<TeamDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [editingDescription, setEditingDescription] = useState(false);
+  const [descriptionDraft, setDescriptionDraft] = useState('');
+  const [descriptionSaving, setDescriptionSaving] = useState(false);
+  const [descriptionError, setDescriptionError] = useState('');
 
   useEffect(() => {
     Promise.all([
@@ -37,6 +42,7 @@ export function TeamDetail({ teamId }: { teamId: string }) {
       .then(([currentUser, teamData]) => {
         setUser(currentUser);
         setData(teamData);
+        setDescriptionDraft(teamData.team.description);
       })
       .catch((loadError: Error) => setError(loadError.message))
       .finally(() => setLoading(false));
@@ -63,6 +69,27 @@ export function TeamDetail({ teamId }: { teamId: string }) {
     }
     return leader && leader.totalVerseCount > 0 ? leader : null;
   }, [data]);
+
+  async function saveDescription() {
+    setDescriptionSaving(true);
+    setDescriptionError('');
+    try {
+      const result = await readJson<{ description: string }>(await fetch('/api/teams', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId, description: descriptionDraft }),
+      }));
+      setData((current) => current
+        ? { ...current, team: { ...current.team, description: result.description } }
+        : current);
+      setDescriptionDraft(result.description);
+      setEditingDescription(false);
+    } catch (saveError) {
+      setDescriptionError(saveError instanceof Error ? saveError.message : 'Could not save the team description.');
+    } finally {
+      setDescriptionSaving(false);
+    }
+  }
 
   if (loading) {
     return <main className="page-loading"><span className="loading-mark"><Users /></span><p>Opening your team…</p></main>;
@@ -104,7 +131,56 @@ export function TeamDetail({ teamId }: { teamId: string }) {
           </button>
           <div>
             <h1>{data.team.name}</h1>
-            <p>{data.team.members.length} {data.team.members.length === 1 ? 'member' : 'members'} reading together</p>
+            {editingDescription ? (
+              <div className="team-description-editor">
+                <label htmlFor="team-description">Team description</label>
+                <Textarea
+                  id="team-description"
+                  value={descriptionDraft}
+                  maxLength={280}
+                  rows={3}
+                  placeholder="What brings your team together?"
+                  onChange={(event) => setDescriptionDraft(event.target.value)}
+                />
+                <div className="team-description-actions">
+                  <small>{descriptionDraft.length} / 280</small>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={descriptionSaving}
+                    onClick={() => {
+                      setDescriptionDraft(data.team.description);
+                      setDescriptionError('');
+                      setEditingDescription(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="button" size="sm" disabled={descriptionSaving} onClick={saveDescription}>
+                    {descriptionSaving ? 'Saving…' : 'Save'}
+                  </Button>
+                </div>
+                {descriptionError && <p className="team-description-error" role="alert">{descriptionError}</p>}
+              </div>
+            ) : (
+              <div className="team-description-display">
+                <p>{data.team.description || 'Add a team description.'}</p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Edit team description"
+                  onClick={() => {
+                    setDescriptionDraft(data.team.description);
+                    setDescriptionError('');
+                    setEditingDescription(true);
+                  }}
+                >
+                  <Pencil aria-hidden="true" /> Edit
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 

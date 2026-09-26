@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { getSessionUser, jsonError } from '@/lib/server';
 
 type TeamRow = { id: string; name: string };
+type TeamDetailRow = TeamRow & { description: string };
 type MemberRow = { teamId: string; id: string; firstName: string; lastName: string };
 type TeamDetailMemberRow = MemberRow & { joinedAt: number; totalVerseCount: number };
 type TeamJourneyRow = { userId: string; readingDate: string; verseCount: number };
@@ -27,10 +28,10 @@ export async function GET(request: Request) {
     }
 
     const team = await env.DB.prepare(
-      `SELECT teams.id, teams.name FROM teams
+      `SELECT teams.id, teams.name, COALESCE(teams.description, '') AS description FROM teams
        JOIN team_members ON team_members.team_id = teams.id
        WHERE teams.id = ? AND team_members.user_id = ?`,
-    ).bind(teamId, user.id).first<TeamRow>();
+    ).bind(teamId, user.id).first<TeamDetailRow>();
     if (!team) return jsonError('We couldn’t find that team, or you no longer have access to it.', 404);
 
     const [membersResult, journeyResult, activityResult] = await Promise.all([
@@ -126,4 +127,26 @@ export async function POST(request: Request) {
   }
 
   return jsonError('Choose whether to create or join a team.');
+}
+
+export async function PATCH(request: Request) {
+  const user = await getSessionUser(request);
+  if (!user) return jsonError('Please sign in.', 401);
+
+  const body = await request.json<{ teamId?: unknown; description?: unknown }>();
+  if (typeof body.teamId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.teamId)) {
+    return jsonError('Please choose a valid team.');
+  }
+  if (typeof body.description !== 'string') return jsonError('Please enter a valid team description.');
+
+  const description = body.description.trim();
+  if (description.length > 280) return jsonError('Team descriptions can be up to 280 characters.');
+
+  const membership = await env.DB.prepare(
+    'SELECT 1 FROM team_members WHERE team_id = ? AND user_id = ?',
+  ).bind(body.teamId, user.id).first();
+  if (!membership) return jsonError('We couldn’t find that team, or you no longer have access to it.', 404);
+
+  await env.DB.prepare('UPDATE teams SET description = ? WHERE id = ?').bind(description, body.teamId).run();
+  return NextResponse.json({ description });
 }

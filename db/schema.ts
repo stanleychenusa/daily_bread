@@ -34,6 +34,7 @@ export const readings = sqliteTable('readings', {
 export const teams = sqliteTable('teams', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
+  description: text('description').notNull().default(''),
   createdBy: text('created_by').notNull().references(() => users.id),
   createdAt: integer('created_at').notNull(),
 }, (table) => [uniqueIndex('idx_teams_name').on(table.name)]);
