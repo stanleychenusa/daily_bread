@@ -8,7 +8,7 @@ import { TeamJourney } from '@/components/team-journey';
 import { buttonVariants } from '@/components/ui/button';
 import { fetchCurrentUser, readJson, type User } from '@/lib/client';
 
-type TeamMember = { id: string; firstName: string; lastName: string; joinedAt: number };
+type TeamMember = { id: string; firstName: string; lastName: string; joinedAt: number; totalVerseCount: number };
 type TeamActivity = { id: string; userId: string; readingDate: string; passage: string; verseCount: number };
 type TeamJourneyReading = { userId: string; readingDate: string; verseCount: number };
 type TeamDetailData = {
@@ -54,6 +54,14 @@ export function TeamDetail({ teamId }: { teamId: string }) {
     const totalVerses = (data?.journey ?? []).reduce((total, reading) => total + reading.verseCount, 0);
     const activeDays = new Set((data?.journey ?? []).map((reading) => reading.readingDate)).size;
     return { totalVerses, activeDays };
+  }, [data]);
+
+  const breadwinner = useMemo(() => {
+    let leader: TeamMember | null = null;
+    for (const member of data?.team.members ?? []) {
+      if (!leader || member.totalVerseCount > leader.totalVerseCount) leader = member;
+    }
+    return leader && leader.totalVerseCount > 0 ? leader : null;
   }, [data]);
 
   if (loading) {
@@ -113,10 +121,14 @@ export function TeamDetail({ teamId }: { teamId: string }) {
             </div>
           </div>
 
-          <div className="team-journey-summary" aria-label="Team reading summary for the last year">
+          <div className="team-journey-summary" aria-label="Team reading summary">
             <div><strong>{data.team.members.length}</strong><small>Members</small></div>
             <div><strong>{teamTotals.totalVerses.toLocaleString()}</strong><small>Verses Together</small></div>
             <div><strong>{teamTotals.activeDays}</strong><small>Total Active Days</small></div>
+            <div className="breadwinner-stat">
+              <strong>{breadwinner ? `${breadwinner.firstName} ${breadwinner.lastName}` : '—'}</strong>
+              <small>{breadwinner ? `Breadwinner · ${breadwinner.totalVerseCount.toLocaleString()} verses` : 'Breadwinner'}</small>
+            </div>
           </div>
 
           <TeamJourney members={data.team.members} readings={data.journey} />

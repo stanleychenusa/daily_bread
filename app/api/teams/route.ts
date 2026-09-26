@@ -5,7 +5,7 @@ import { getSessionUser, jsonError } from '@/lib/server';
 
 type TeamRow = { id: string; name: string };
 type MemberRow = { teamId: string; id: string; firstName: string; lastName: string };
-type TeamDetailMemberRow = MemberRow & { joinedAt: number };
+type TeamDetailMemberRow = MemberRow & { joinedAt: number; totalVerseCount: number };
 type TeamJourneyRow = { userId: string; readingDate: string; verseCount: number };
 type TeamActivityRow = { id: string; userId: string; readingDate: string; passage: string; verseCount: number };
 
@@ -36,9 +36,14 @@ export async function GET(request: Request) {
     const [membersResult, journeyResult, activityResult] = await Promise.all([
       env.DB.prepare(
         `SELECT team_members.team_id AS teamId, users.id, users.first_name AS firstName,
-                users.last_name AS lastName, team_members.joined_at AS joinedAt
-         FROM team_members JOIN users ON users.id = team_members.user_id
-         WHERE team_members.team_id = ? ORDER BY team_members.joined_at ASC`,
+                users.last_name AS lastName, team_members.joined_at AS joinedAt,
+                COALESCE(SUM(readings.verse_count), 0) AS totalVerseCount
+         FROM team_members
+         JOIN users ON users.id = team_members.user_id
+         LEFT JOIN readings ON readings.user_id = users.id
+         WHERE team_members.team_id = ?
+         GROUP BY team_members.team_id, users.id, users.first_name, users.last_name, team_members.joined_at
+         ORDER BY team_members.joined_at ASC`,
       ).bind(teamId).all<TeamDetailMemberRow>(),
       env.DB.prepare(
         `SELECT readings.user_id AS userId, readings.reading_date AS readingDate,
