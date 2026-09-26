@@ -408,6 +408,8 @@
 .member-activity-card > header > div { min-width: 0; }
 .member-avatar { display: grid; place-items: center; width: 2.35rem; height: 2.35rem; flex: 0 0 auto; border-radius: 50%; color: #fffaf2; background: #b84f0c; font-size: .66rem; font-weight: 850; }
 .member-owner-badge { display: inline-flex; align-items: center; min-height: 1.4rem; margin-left: auto; padding: .14rem .48rem; border: 1px solid #d5ac7b; border-radius: 999px; background: #fff3dd; color: #75401f; font-size: .54rem; font-weight: 800; line-height: 1.2; }
+.member-remove-button { min-height: 1.55rem; margin-left: auto; padding: .18rem .4rem; color: #9b3f31; font-size: .54rem; }
+.member-remove-button:hover { color: #8a3126; background: rgb(168 70 54 / 10%); }
 .member-activity-card h3 { margin: 0; color: #713419; font: 700 1.08rem/1 var(--font-caveat), cursive; }
 .member-activity-card header p { margin: .2rem 0 0; color: #765f4d; font-size: .57rem; }
 .member-reading-list { margin: 0; padding: 0; list-style: none; }

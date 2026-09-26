@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, BookOpen, CalendarDays, Pencil, Trash2, Users } from 'lucide-react';
+import { ArrowLeft, BookOpen, CalendarDays, Pencil, Trash2, UserMinus, Users } from 'lucide-react';
 
 import { AppHeader } from '@/components/app-header';
 import { TeamJourney } from '@/components/team-journey';
@@ -25,7 +25,7 @@ type TeamMember = { id: string; firstName: string; lastName: string; joinedAt: n
 type TeamActivity = { id: string; userId: string; readingDate: string; passage: string; verseCount: number };
 type TeamJourneyReading = { userId: string; readingDate: string; verseCount: number };
 type TeamDetailData = {
-  team: { id: string; name: string; joinCode: string; description: string; ownerId: string; canDelete: boolean; members: TeamMember[] };
+  team: { id: string; name: string; joinCode: string; description: string; ownerId: string; isOwner: boolean; members: TeamMember[] };
   journey: TeamJourneyReading[];
   activity: TeamActivity[];
 };
@@ -51,6 +51,9 @@ export function TeamDetail({ teamId }: { teamId: string }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null);
+  const [removingMember, setRemovingMember] = useState(false);
+  const [removeMemberError, setRemoveMemberError] = useState('');
 
   useEffect(() => {
     Promise.all([
@@ -146,6 +149,30 @@ export function TeamDetail({ teamId }: { teamId: string }) {
     }
   }
 
+  async function removeMember() {
+    if (!memberToRemove) return;
+    setRemovingMember(true);
+    setRemoveMemberError('');
+    try {
+      await readJson<{ ok: boolean; removedMemberId: string }>(await fetch(
+        `/api/teams?teamId=${encodeURIComponent(teamId)}&memberId=${encodeURIComponent(memberToRemove.id)}`,
+        { method: 'DELETE' },
+      ));
+      const removedMemberId = memberToRemove.id;
+      setData((current) => current ? {
+        ...current,
+        team: { ...current.team, members: current.team.members.filter((member) => member.id !== removedMemberId) },
+        journey: current.journey.filter((reading) => reading.userId !== removedMemberId),
+        activity: current.activity.filter((reading) => reading.userId !== removedMemberId),
+      } : current);
+      setMemberToRemove(null);
+    } catch (removeError) {
+      setRemoveMemberError(removeError instanceof Error ? removeError.message : 'Could not remove this member.');
+    } finally {
+      setRemovingMember(false);
+    }
+  }
+
   if (loading) {
     return <main className="page-loading"><span className="loading-mark"><Users /></span><p>Opening your team…</p></main>;
   }
@@ -225,20 +252,22 @@ export function TeamDetail({ teamId }: { teamId: string }) {
             ) : (
               <div className="team-name-display">
                 <h1>{data.team.name}</h1>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  aria-label="Edit team name"
-                  onClick={() => {
-                    setNameDraft(data.team.name);
-                    setNameError('');
-                    setEditingDescription(false);
-                    setEditingName(true);
-                  }}
-                >
-                  <Pencil aria-hidden="true" /> Edit
-                </Button>
+                {data.team.isOwner && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    aria-label="Edit team name"
+                    onClick={() => {
+                      setNameDraft(data.team.name);
+                      setNameError('');
+                      setEditingDescription(false);
+                      setEditingName(true);
+                    }}
+                  >
+                    <Pencil aria-hidden="true" /> Edit
+                  </Button>
+                )}
               </div>
             )}
             {editingDescription ? (
@@ -275,21 +304,23 @@ export function TeamDetail({ teamId }: { teamId: string }) {
               </div>
             ) : (
               <div className="team-description-display">
-                <p>{data.team.description || 'Add a team description.'}</p>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  aria-label="Edit team description"
-                  onClick={() => {
-                    setDescriptionDraft(data.team.description);
-                    setDescriptionError('');
-                    setEditingName(false);
-                    setEditingDescription(true);
-                  }}
-                >
-                  <Pencil aria-hidden="true" /> Edit
-                </Button>
+                <p>{data.team.description || (data.team.isOwner ? 'Add a team description.' : 'No team description yet.')}</p>
+                {data.team.isOwner && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    aria-label="Edit team description"
+                    onClick={() => {
+                      setDescriptionDraft(data.team.description);
+                      setDescriptionError('');
+                      setEditingName(false);
+                      setEditingDescription(true);
+                    }}
+                  >
+                    <Pencil aria-hidden="true" /> Edit
+                  </Button>
+                )}
               </div>
             )}
             <div className="team-id-row">
@@ -347,7 +378,22 @@ export function TeamDetail({ teamId }: { teamId: string }) {
                       <h3>{member.firstName} {member.lastName}</h3>
                       <p>{memberYearVerses.toLocaleString()} verses in the last year</p>
                     </div>
-                    {member.id === data.team.ownerId && <span className="member-owner-badge">Owner</span>}
+                    {member.id === data.team.ownerId ? (
+                      <span className="member-owner-badge">Owner</span>
+                    ) : data.team.isOwner ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        className="member-remove-button"
+                        onClick={() => {
+                          setRemoveMemberError('');
+                          setMemberToRemove(member);
+                        }}
+                      >
+                        <UserMinus aria-hidden="true" /> Remove
+                      </Button>
+                    ) : null}
                   </header>
 
                   {memberActivity.length > 0 ? (
@@ -371,7 +417,7 @@ export function TeamDetail({ teamId }: { teamId: string }) {
           </div>
         </section>
 
-        {data.team.canDelete && (
+        {data.team.isOwner && (
           <section className="team-danger-zone" aria-labelledby="delete-team-title">
             <div>
               <h2 id="delete-team-title">Delete team</h2>
@@ -404,6 +450,35 @@ export function TeamDetail({ teamId }: { teamId: string }) {
             <AlertDialogCancel disabled={deleting}>Keep team</AlertDialogCancel>
             <AlertDialogAction variant="destructive" disabled={deleting} onClick={() => void deleteTeam()}>
               {deleting ? 'Deleting…' : 'Yes, delete team'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={Boolean(memberToRemove)}
+        onOpenChange={(open) => {
+          if (!open && !removingMember) {
+            setMemberToRemove(null);
+            setRemoveMemberError('');
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia><UserMinus aria-hidden="true" /></AlertDialogMedia>
+            <AlertDialogTitle>
+              Remove {memberToRemove?.firstName} {memberToRemove?.lastName}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              They will lose access to {data.team.name} and will no longer appear in its shared journey. Their personal readings and reflections will stay intact.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {removeMemberError && <p className="team-delete-error" role="alert">{removeMemberError}</p>}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removingMember}>Keep member</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" disabled={removingMember} onClick={() => void removeMember()}>
+              {removingMember ? 'Removing…' : 'Yes, remove member'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -87,7 +87,7 @@ export async function GET(request: Request) {
         joinCode: team.joinCode,
         description: team.description,
         ownerId: team.createdBy,
-        canDelete: team.createdBy === user.id,
+        isOwner: team.createdBy === user.id,
         members: membersResult.results,
       },
       journey: journeyResult.results,
@@ -163,10 +163,10 @@ export async function PATCH(request: Request) {
   if (typeof body.teamId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.teamId)) {
     return jsonError('Please choose a valid team.');
   }
-  const membership = await env.DB.prepare(
-    'SELECT 1 FROM team_members WHERE team_id = ? AND user_id = ?',
+  const ownedTeam = await env.DB.prepare(
+    'SELECT 1 FROM teams WHERE id = ? AND created_by = ?',
   ).bind(body.teamId, user.id).first();
-  if (!membership) return jsonError('We couldn’t find that team, or you no longer have access to it.', 404);
+  if (!ownedTeam) return jsonError('Only the team owner can change the team name or description.', 403);
 
   if (body.name !== undefined) {
     if (typeof body.name !== 'string') return jsonError('Please enter a valid team name.');
@@ -192,6 +192,7 @@ export async function DELETE(request: Request) {
   if (!user) return jsonError('Please sign in.', 401);
 
   const teamId = new URL(request.url).searchParams.get('teamId');
+  const memberId = new URL(request.url).searchParams.get('memberId');
   if (!teamId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(teamId)) {
     return jsonError('Please choose a valid team.');
   }
@@ -199,7 +200,23 @@ export async function DELETE(request: Request) {
   const ownedTeam = await env.DB.prepare(
     'SELECT id FROM teams WHERE id = ? AND created_by = ?',
   ).bind(teamId, user.id).first();
-  if (!ownedTeam) return jsonError('Only the person who created this team can delete it.', 403);
+  if (!ownedTeam) return jsonError('Only the team owner can manage its members or delete it.', 403);
+
+  if (memberId) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(memberId)) {
+      return jsonError('Please choose a valid team member.');
+    }
+    if (memberId === user.id) return jsonError('The team owner cannot remove themselves.', 400);
+
+    const membership = await env.DB.prepare(
+      'SELECT 1 FROM team_members WHERE team_id = ? AND user_id = ?',
+    ).bind(teamId, memberId).first();
+    if (!membership) return jsonError('That person is no longer a member of this team.', 404);
+
+    await env.DB.prepare('DELETE FROM team_members WHERE team_id = ? AND user_id = ?')
+      .bind(teamId, memberId).run();
+    return NextResponse.json({ ok: true, removedMemberId: memberId });
+  }
 
   await env.DB.batch([
     env.DB.prepare('DELETE FROM team_members WHERE team_id = ?').bind(teamId),
