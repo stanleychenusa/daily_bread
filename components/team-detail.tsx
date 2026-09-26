@@ -90,8 +90,6 @@ export function TeamDetail({ teamId }: { teamId: string }) {
     return leader && leader.totalVerseCount > 0 ? leader : null;
   }, [data]);
 
-  const teamOwner = data?.team.members.find((member) => member.id === data.team.ownerId) ?? null;
-
   async function saveName() {
     setNameSaving(true);
     setNameError('');
@@ -227,11 +225,6 @@ export function TeamDetail({ teamId }: { teamId: string }) {
             ) : (
               <div className="team-name-display">
                 <h1>{data.team.name}</h1>
-                {teamOwner && (
-                  <span className="team-owner-badge">
-                    Owner: {teamOwner.firstName} {teamOwner.lastName}
-                  </span>
-                )}
                 <Button
                   type="button"
                   variant="ghost"
@@ -354,6 +347,7 @@ export function TeamDetail({ teamId }: { teamId: string }) {
                       <h3>{member.firstName} {member.lastName}</h3>
                       <p>{memberYearVerses.toLocaleString()} verses in the last year</p>
                     </div>
+                    {member.id === data.team.ownerId && <span className="member-owner-badge">Owner</span>}
                   </header>
 
                   {memberActivity.length > 0 ? (
